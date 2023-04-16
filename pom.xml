@@ -30,9 +30,7 @@
   <description>
     Binary Tree implementations.
   </description>
-  <properties>
-    <surefireArgLine>-Xcomp</surefireArgLine>
-  </properties>
+  <!-- FIXME: Add -Xcomp to surefire -->
   <dependencies>
     <dependency>
       <groupId>org.libj</groupId>
