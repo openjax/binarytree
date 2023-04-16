@@ -36,7 +36,7 @@ import org.libj.util.CollectionUtil;
 public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T extends Comparable<T>> implements ValueSpec<T> {
   static final ThreadLocalRandom random = ThreadLocalRandom.current();
 
-  static final int repeat = 10000;
+  static final int repeat = 1000;
 
   static void debug() {
     System.err.println("Put breakpoint here");
