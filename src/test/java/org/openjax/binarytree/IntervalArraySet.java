@@ -300,8 +300,8 @@ public class IntervalArraySet<T extends Comparable<T> & Serializable> implements
 
     final Interval<T> f = data.get(fromIndex);
     final T iMax = key.getMax();
-    final T fMin = f.getMin();
-    if (fromIndex >= size || fMin.compareTo(iMax) > 0)
+    final T fMin = f.prevValue(f.getMin());
+    if (fromIndex >= size || fMin.compareTo(iMax) >= 0)
       return EMPTY;
 
     int toIndex = CollectionUtil.binaryClosestSearch(data, fromIndex, size, key, maxComparator);
@@ -310,43 +310,43 @@ public class IntervalArraySet<T extends Comparable<T> & Serializable> implements
 
     final Interval<T> t = data.get(toIndex);
     final T iMin = key.getMin();
-    final T tMax = t.getMax();
+    final T tMax = t.nextValue(t.getMax());
     if (tMax.compareTo(iMin) < 0)
       return EMPTY;
 
-    if (iMax.compareTo(fMin) < 0 || iMin.compareTo(tMax) > 0)
+    if (iMax.compareTo(fMin) <= 0 || iMin.compareTo(tMax) >= 0)
       return new Interval[] {key};
 
     final Interval<T>[] diff;
-    if (iMin.compareTo(fMin) < 0) {
-      if (iMax.compareTo(tMax) > 0) {
+    if (iMin.compareTo(fMin) <= 0) {
+      if (iMax.compareTo(tMax) >= 0) {
         diff = getGaps(fromIndex, toIndex, true, true);
         diff[0] = key.newInterval(iMin, fMin);
         diff[diff.length - 1] = key.newInterval(tMax, iMax);
       }
       else {
         diff = getGaps(fromIndex, toIndex, true, false);
-        if (iMax.compareTo(tMax) < 0 && diff.length > 1) {
+        if (iMax.compareTo(tMax) <= 0 && diff.length > 1) {
           final int len1 = diff.length - 1;
           final Interval<T> last = diff[len1];
           if (last.getMax().compareTo(iMax) > 0)
-            diff[len1] = key.newInterval(last.getMin(), iMax);
+            diff[len1] = key.newInterval(last.nextValue(last.getMin()), iMax);
         }
 
         diff[0] = key.newInterval(iMin, fMin);
       }
     }
-    else if (iMax.compareTo(tMax) > 0) {
+    else if (iMax.compareTo(tMax) >= 0) {
       diff = getGaps(fromIndex, toIndex, false, true);
       diff[diff.length - 1] = key.newInterval(tMax, iMax);
     }
     else {
       diff = getGaps(fromIndex, toIndex, false, false);
-      if (iMax.compareTo(tMax) < 0 && diff.length > 0) {
+      if (iMax.compareTo(tMax) <= 0 && diff.length > 0) {
         final int len1 = diff.length - 1;
         final Interval<T> last = diff[len1];
         if (last.getMax().compareTo(iMax) > 0)
-          diff[len1] = key.newInterval(last.getMin(), iMax);
+          diff[len1] = key.newInterval(last.nextValue(last.getMin()), iMax);
       }
     }
 
@@ -371,7 +371,7 @@ public class IntervalArraySet<T extends Comparable<T> & Serializable> implements
     final Interval<T>[] gaps = new Interval[len];
     for (Interval<T> next, prev = data.get(fromIndex); ++fromIndex <= toIndex; prev = next) {
       next = data.get(fromIndex);
-      gaps[i++] = prev.newInterval(prev.getMax(), next.getMin());
+      gaps[i++] = prev.newInterval(prev.nextValue(prev.getMax()), next.prevValue(next.getMin()));
     }
 
     return gaps;
