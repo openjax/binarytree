@@ -376,6 +376,12 @@ public abstract class BinaryTree<T extends Comparable<T>> implements Cloneable {
     return new Node(key);
   }
 
+  /**
+   * Returns an {@link Iterator} that allows iteration over the elements in this set in ascending order.
+   *
+   * @return An {@link Iterator} that allows iteration over the elements in this set in ascending order.
+   * @complexity O(1)
+   */
   public Iterator<T> iterator() {
     return isEmpty() ? Iterators.empty() : new Iterator<T>() {
       private Node prevPrev = null, prev = null, next = getRoot().getMinNode();
@@ -428,14 +434,31 @@ public abstract class BinaryTree<T extends Comparable<T>> implements Cloneable {
     };
   }
 
+  /**
+   * Returns {@code true} if this set has zero elements, otherwise {@code false}.
+   *
+   * @return {@code true} if this set has zero elements, otherwise {@code false}.
+   * @complexity O(1)
+   */
   public boolean isEmpty() {
     return getRoot() == null;
   }
 
+  /**
+   * Removes all of the elements from this set (i.e. the set will be empty after this method returns).
+   *
+   * @complexity O(1)
+   */
   public void clear() {
     setRoot(null);
   }
 
+  /**
+   * Returns the number of elements in this set.
+   *
+   * @return The number of elements in this set.
+   * @complexity O(1)
+   */
   public int size() {
     final Node root = getRoot();
     return root != null ? root.getSize() : 0;
@@ -450,6 +473,16 @@ public abstract class BinaryTree<T extends Comparable<T>> implements Cloneable {
     return toArray(n.getRight(), a, index);
   }
 
+  /**
+   * Returns an array containing all of the elements in this set in ascending order. The returned array's
+   * {@linkplain Class#getComponentType runtime component type} is {@code Object}.
+   * <p>
+   * The returned array will be "safe" in that no references to it are maintained by this set. (In other words, this method
+   * allocates a new array). The caller is thus free to modify the returned array.
+   *
+   * @return An array containing all of the elements in this set in ascending order.
+   * @complexity O(n)
+   */
   public Object[] toArray() {
     final Node root = getRoot();
     if (root == null)
@@ -461,6 +494,26 @@ public abstract class BinaryTree<T extends Comparable<T>> implements Cloneable {
     return a;
   }
 
+  /**
+   * Returns an array containing all of the elements in this set in ascending order; the runtime type of the returned array is that
+   * of the specified array. If the set fits in the specified array, it is returned therein. Otherwise, a new array is allocated
+   * with the runtime type of the specified array and the size of this set.
+   * <p>
+   * If this set fits in the specified array with room to spare (i.e., the array has more elements than this set), the element in
+   * the array immediately following the end of the set is set to {@code null}.
+   * <p>
+   * The returned array will be "safe" in that no references to it are maintained by this set. (In other words, this method
+   * allocates a new array). The caller is thus free to modify the returned array.
+   *
+   * @param <E> The component type of the array to contain the set.
+   * @param a The array into which the elements of this set are to be stored, if it is big enough; otherwise, a new array of the
+   *          same runtime type is allocated for this purpose.
+   * @return An array containing all of the elements in this set.
+   * @throws ArrayStoreException If the runtime type of any element in this set is not assignable to the
+   *           {@linkplain Class#getComponentType runtime component type} of the specified array.
+   * @throws NullPointerException If the specified array is null.
+   * @complexity O(n)
+   */
   @SuppressWarnings("unchecked")
   public <E>E[] toArray(E[] a) {
     final Node root = getRoot();
@@ -483,6 +536,17 @@ public abstract class BinaryTree<T extends Comparable<T>> implements Cloneable {
     return a;
   }
 
+  /**
+   * Returns a copy of this set, with a guarantee for any object {@code x}:
+   * <ol>
+   * <li>{@code x.clone() != x}</li>
+   * <li>{@code x.clone().getClass() == x.getClass()}</li>
+   * <li>{@code x.clone().equals(x)}</li>
+   * </ol>
+   *
+   * @return A copy of this set.
+   * @complexity O(n)
+   */
   @Override
   @SuppressWarnings("unchecked")
   public BinaryTree<T> clone() {
@@ -498,11 +562,21 @@ public abstract class BinaryTree<T extends Comparable<T>> implements Cloneable {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @complexity O(n)
+   */
   @Override
   public boolean equals(final Object obj) {
     return obj == this || obj instanceof BinaryTree && Objects.equals(root, ((BinaryTree<?>)obj).root);
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @complexity O(n)
+   */
   @Override
   public int hashCode() {
     return root == null ? 0 : root.hashCode();
@@ -517,6 +591,11 @@ public abstract class BinaryTree<T extends Comparable<T>> implements Cloneable {
     toString(b, n.getRight());
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @complexity O(n)
+   */
   @Override
   public final String toString() {
     final Node root = getRoot();

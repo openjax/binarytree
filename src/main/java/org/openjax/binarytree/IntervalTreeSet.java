@@ -876,7 +876,7 @@ public class IntervalTreeSet<T extends Comparable<T> & Serializable> extends Avl
    * {@inheritDoc}
    *
    * @throws NullPointerException If the provided {@link Interval} is null.
-   * @complexity O(1)
+   * @complexity O(log(n))
    */
   @Override
   public Interval<T> lower(final Interval<T> e) {
@@ -892,7 +892,7 @@ public class IntervalTreeSet<T extends Comparable<T> & Serializable> extends Avl
    * {@inheritDoc}
    *
    * @throws NullPointerException If the provided {@link Interval} is null.
-   * @complexity O(1)
+   * @complexity O(log(n))
    */
   @Override
   public Interval<T> higher(final Interval<T> e) {
@@ -1001,25 +1001,25 @@ public class IntervalTreeSet<T extends Comparable<T> & Serializable> extends Avl
   }
 
   @Override
-  public NavigableSet<Interval<T>> headSet(final Interval<T> toElement, final boolean inclusive) {
-    // FIXME: Implement this.
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public NavigableSet<Interval<T>> tailSet(final Interval<T> fromElement, final boolean inclusive) {
-    // FIXME: Implement this.
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public SortedSet<Interval<T>> subSet(final Interval<T> fromElement, final Interval<T> toElement) {
     // FIXME: Implement this.
     throw new UnsupportedOperationException();
   }
 
   @Override
+  public NavigableSet<Interval<T>> headSet(final Interval<T> toElement, final boolean inclusive) {
+    // FIXME: Implement this.
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public SortedSet<Interval<T>> headSet(final Interval<T> toElement) {
+    // FIXME: Implement this.
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public NavigableSet<Interval<T>> tailSet(final Interval<T> fromElement, final boolean inclusive) {
     // FIXME: Implement this.
     throw new UnsupportedOperationException();
   }
