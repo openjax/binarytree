@@ -580,10 +580,8 @@ public class IntervalTreeSet<T extends Comparable<T> & Serializable> extends Avl
   }
 
   /**
-   * Returns {@code true} if an {@link Interval} of the provided {@code key} was removed from this set, otherwise {@code false}.
+   * {@inheritDoc}
    *
-   * @param key The {@link Interval} to remove from this set.
-   * @return {@code true} if an {@link Interval} of the provided {@code key} was removed from this set, otherwise {@code false}.
    * @throws NullPointerException If the provided {@link Interval} is null.
    * @complexity O(log(n))
    */
@@ -679,19 +677,8 @@ public class IntervalTreeSet<T extends Comparable<T> & Serializable> extends Avl
   }
 
   /**
-   * Returns an array of {@link Interval} objects representing the intervals that are not present in (i.e. contained by) this set
-   * within the range of the provided {@link Interval}.
-   * <p>
-   * If the full range of the provided {@link Interval} is present (i.e. contained by) this set, then this method returns an empty
-   * array.
-   * <p>
-   * If the full range of the provided {@link Interval} is absent (i.e. not contained by) this set, then this method returns an
-   * array containing a reference to the provided {@link Interval}.
+   * {@inheritDoc}
    *
-   * @param key The {@link Interval} representing the range within which to determine the intervals that are not present in this
-   *          set.
-   * @return An array of {@link Interval} objects representing the intervals that are not present in this set within the range of
-   *         the provided {@link Interval}.
    * @throws NullPointerException If the provided {@link Interval} is null.
    * @complexity O(log(n))
    */
@@ -765,12 +752,9 @@ public class IntervalTreeSet<T extends Comparable<T> & Serializable> extends Avl
   }
 
   /**
-   * Returns {@code true} if the provided value is present in (i.e. contained by) at least one {@link Interval} in this set,
-   * otherwise {@code false}.
+   * {@inheritDoc}
    *
-   * @return {@code true} if the provided value is present in (i.e. contained by) at least one {@link Interval} in this set,
-   *         otherwise {@code false}.
-   * @throws NullPointerException If the provided value is null.
+   * @throws NullPointerException If the provided key is null.
    * @complexity O(log(n))
    */
   @Override
@@ -787,9 +771,7 @@ public class IntervalTreeSet<T extends Comparable<T> & Serializable> extends Avl
   }
 
   /**
-   * Returns {@code true} if the full span (i.e. from the {@linkplain Interval#getMin() min} to the {@linkplain Interval#getMax()
-   * max} coordinates, which includes the min and max values themselves) of the provided {@link Interval} is present in (i.e.
-   * contained by) at least one {@link Interval} in this set, otherwise {@code false}.
+   * {@inheritDoc}
    *
    * @throws NullPointerException If the provided {@link Interval} is null.
    * @complexity O(log(n))
@@ -814,9 +796,7 @@ public class IntervalTreeSet<T extends Comparable<T> & Serializable> extends Avl
   }
 
   /**
-   * Returns {@code true} if part of the span (i.e. from the {@linkplain Interval#getMin() min} to the {@linkplain Interval#getMax()
-   * max} coordinates, which includes the min and max values themselves) of the provided {@link Interval} is present in (i.e.
-   * contained by) at least one {@link Interval} in this set, otherwise {@code false}.
+   * {@inheritDoc}
    *
    * @throws NullPointerException If the provided {@link Interval} is null.
    * @complexity O(log(n))

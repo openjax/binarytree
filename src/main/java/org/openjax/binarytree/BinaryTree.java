@@ -306,11 +306,11 @@ public abstract class BinaryTree<T extends Comparable<T>> implements Cloneable {
       }
 
       if (spaces > 1) {
-        int index = b.length();
-        while ((index = Strings.lastIndexOf(b, '\n', index - spaces) + 1) > 0)
-          b.delete(index, index + spaces);
+        int pos = b.length();
+        while ((pos = Strings.lastIndexOf(b, '\n', pos - spaces) + 1) > 0)
+          b.delete(pos, pos + spaces);
 
-        b.delete(index, index + spaces);
+        b.delete(pos, pos + spaces);
       }
 
       return b.toString();
@@ -358,6 +358,14 @@ public abstract class BinaryTree<T extends Comparable<T>> implements Cloneable {
     }
   }
 
+  /**
+   * Returns the size of the provided {@link BinaryTree.Node}, or {@code 0} if the provided {@link BinaryTree.Node} is null. A
+   * node's size defined as the the count of the node itself (i.e. {@code 1}), plus the count of all of the node's children.
+   *
+   * @param node The {@link BinaryTree.Node} for which to return the size.
+   * @return The size of the provided {@link BinaryTree.Node}, or {@code 0} if the provided {@link BinaryTree.Node} is null.
+   * @complexity O(1)
+   */
   protected static int size(final BinaryTree<?>.Node node) {
     return node != null ? node.size : 0;
   }
@@ -372,6 +380,13 @@ public abstract class BinaryTree<T extends Comparable<T>> implements Cloneable {
     return root;
   }
 
+  /**
+   * Returns a new instance of this class's specific {@link Node} subclass with the provided key.
+   *
+   * @param key The key.
+   * @return A new instance of this class's specific {@link Node} subclass with the provided key.
+   * @complexity O(1)
+   */
   protected Node newNode(final T key) {
     return new Node(key);
   }
