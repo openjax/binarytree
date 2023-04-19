@@ -101,17 +101,12 @@ public class IntervalTreeSet<T extends Comparable<T> & Serializable> extends Avl
     @Override
     protected IntervalNode rotateLeft() {
       final IntervalNode node = (IntervalNode)super.rotateLeft();
-      if (node != null) {
-        final IntervalNode left = node.getLeft();
-        if (left != null) {
-          node.setMinNode(left.getMinNode());
-          final IntervalNode leftRight = left.getRight();
-          left.setMaxNode(leftRight != null ? leftRight.getMaxNode() : left);
-        }
-        else {
-          node.setMinNode(this);
-        }
-      }
+
+      final IntervalNode left = node.getLeft();
+      node.setMinNode(left.getMinNode());
+
+      final IntervalNode leftRight = left.getRight();
+      left.setMaxNode(leftRight != null ? leftRight.getMaxNode() : left);
 
       return node;
     }
@@ -119,17 +114,12 @@ public class IntervalTreeSet<T extends Comparable<T> & Serializable> extends Avl
     @Override
     protected IntervalNode rotateRight() {
       final IntervalNode node = (IntervalNode)super.rotateRight();
-      if (node != null) {
-        final IntervalNode right = node.getRight();
-        if (right != null) {
-          node.setMaxNode(right.getMaxNode());
-          final IntervalNode rightLeft = right.getLeft();
-          right.setMinNode(rightLeft != null ? rightLeft.getMinNode() : right);
-        }
-        else {
-          node.setMaxNode(this);
-        }
-      }
+
+      final IntervalNode right = node.getRight();
+      node.setMaxNode(right.getMaxNode());
+
+      final IntervalNode rightLeft = right.getLeft();
+      right.setMinNode(rightLeft != null ? rightLeft.getMinNode() : right);
 
       return node;
     }

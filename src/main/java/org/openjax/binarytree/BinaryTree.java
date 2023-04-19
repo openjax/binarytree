@@ -205,13 +205,14 @@ public abstract class BinaryTree<T extends Comparable<T>> implements Cloneable {
             if (aa.length() > widest)
               widest = aa.length();
 
-            next.add(node.getLeft());
-            next.add(node.getRight());
-
-            if (node.getLeft() != null)
+            final BinaryTree<T>.Node left = node.getLeft();
+            next.add(left);
+            if (left != null)
               ++nn;
 
-            if (node.getRight() != null)
+            final BinaryTree<T>.Node right = node.getRight();
+            next.add(right);
+            if (right != null)
               ++nn;
           }
         }
@@ -229,9 +230,10 @@ public abstract class BinaryTree<T extends Comparable<T>> implements Cloneable {
 
       final int noLines = lines.size();
       int perpiece = lines.get(noLines - 1).size() * (widest + 4);
-      for (int i = 0; i < noLines; ++i) { // [RA]
+      final double perpiece2 = perpiece / 2d;
+      for (int i = 0; i < noLines; ++i, perpiece = (int)perpiece2) { // [RA]
         final ArrayList<String> line = lines.get(i);
-        final int hpw = (int)Math.floor(perpiece / 2d) - 1;
+        final int hpw = (int)Math.floor(perpiece2) - 1;
 
         final int length = line.size();
         if (i > 0) {
@@ -240,13 +242,10 @@ public abstract class BinaryTree<T extends Comparable<T>> implements Cloneable {
             // split Node
             char c = ' ';
             if (!even) {
-              if (line.get(j - 1) != null) {
-                c = (line.get(j) != null) ? '┴' : '┘';
-              }
-              else {
-                if (j < length && line.get(j) != null)
-                  c = '└';
-              }
+              if (line.get(j - 1) != null)
+                c = line.get(j) != null ? '┴' : '┘';
+              else if (j < length && line.get(j) != null)
+                c = '└';
             }
 
             b.append(c);
@@ -275,11 +274,10 @@ public abstract class BinaryTree<T extends Comparable<T>> implements Cloneable {
           if (str == null)
             str = "";
 
-          final int len = str.length();
-          final int gap1 = (int)Math.ceil(perpiece / 2d - len / 2d);
-          final int gap2 = (int)Math.floor(perpiece / 2d - len / 2d);
+          final double perpiece2len2 = perpiece2 - str.length() / 2d;
+          final int gap1 = (int)Math.ceil(perpiece2len2);
+          final int gap2 = (int)Math.floor(perpiece2len2);
 
-          // a number
           for (int k = 0; k < gap1; ++k) // [N]
             b.append(' ');
 
@@ -289,7 +287,6 @@ public abstract class BinaryTree<T extends Comparable<T>> implements Cloneable {
         }
 
         b.append('\n');
-        perpiece /= 2;
       }
 
       int spaces = Integer.MAX_VALUE;
@@ -392,9 +389,9 @@ public abstract class BinaryTree<T extends Comparable<T>> implements Cloneable {
   }
 
   /**
-   * Returns an {@link Iterator} that allows iteration over the elements in this set in ascending order.
+   * Returns an {@link Iterator} over the elements in this set in ascending order.
    *
-   * @return An {@link Iterator} that allows iteration over the elements in this set in ascending order.
+   * @return An {@link Iterator} over the elements in this set in ascending order.
    * @complexity O(1)
    */
   public Iterator<T> iterator() {

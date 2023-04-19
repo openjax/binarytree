@@ -193,8 +193,6 @@ public class IntervalTreeSetTest extends BinarySearchTreeTest<IntervalTreeSet<In
     }
 
     if (next != null) {
-      if (prev != null && !prev.equals(tree.lower(next)))
-        tree.lower(next);
       assertEquals(prev, tree.lower(next), onError);
       assertEquals(next, tree.floor(next), onError);
       if (prev != null) {
