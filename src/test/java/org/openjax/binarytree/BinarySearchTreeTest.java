@@ -309,11 +309,9 @@ public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T ext
 
         test(onError2 -> {
           final BST clone = (BST)tree.clone();
-          final ArrayList<T> keys = CollectionUtil.asCollection(new ArrayList<>(), clone.toArray((T[])Array.newInstance(type(), clone.size())));
-
-          final Iterator<T> treeIterator = clone.iterator();
           int size = clone.size();
-
+          final ArrayList<T> keys = CollectionUtil.asCollection(new ArrayList<>(), clone.toArray((T[])Array.newInstance(type(), size)));
+          final Iterator<T> treeIterator = clone.iterator();
           final Iterator<T> keyIterator = keys.iterator();
           for (int i = 0; keyIterator.hasNext(); ++i) { //[I]
             final T keyToDelete = keyIterator.next();

@@ -26,7 +26,7 @@ import org.libj.util.Interval;
  *
  * @param <T> The type parameter of values defining the coordinates of the {@link Interval}s belonging to this set.
  */
-public interface IntervalSet<T extends Comparable<T> & Serializable> extends NavigableSet<Interval<T>>, Serializable {
+public interface IntervalSet<T extends Comparable<? super T> & Serializable> extends NavigableSet<Interval<T>>, Serializable {
   /**
    * Returns {@code true} if the provided {@code key} is present in (i.e. contained by) at least one {@link Interval} in this set,
    * otherwise {@code false}.

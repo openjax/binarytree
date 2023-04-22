@@ -35,8 +35,8 @@ import org.libj.util.Interval;
 import org.libj.util.PermutationIterator;
 
 public class IntervalTreeSetTest extends BinarySearchTreeTest<IntervalTreeSet<Integer>,Interval<Integer>> {
-  private static final Interval<Integer> MIN_VALUE = new Interval<>(Integer.MIN_VALUE, Integer.MIN_VALUE);
-  private static final Interval<Integer> MAX_VALUE = new Interval<>(Integer.MAX_VALUE, Integer.MAX_VALUE);
+  private static final Interval<Integer> MIN_VALUE = new Interval<>(Integer.MIN_VALUE, Integer.MIN_VALUE + 1);
+  private static final Interval<Integer> MAX_VALUE = new Interval<>(Integer.MAX_VALUE - 1, Integer.MAX_VALUE);
 
   private static final int TEST_TREE_MIN_SIZE = 1;
   private static final int TEST_TREE_MAX_SIZE = 1000;
@@ -78,12 +78,12 @@ public class IntervalTreeSetTest extends BinarySearchTreeTest<IntervalTreeSet<In
 
   @Override
   public Interval<Integer> prevValue(final Interval<Integer> value) {
-    return new Interval<>(value.prevValue(value.getMin()), value.prevValue(value.getMax()));
+    return new Interval<>(value.getMin() - 1, value.getMax() - 1);
   }
 
   @Override
   public Interval<Integer> nextValue(final Interval<Integer> value) {
-    final Integer min = value.nextValue(value.getMax());
+    final Integer min = value.getMax() + 1;
     return new Interval<>(min, min + value.getMax() - value.getMin());
   }
 
@@ -97,7 +97,7 @@ public class IntervalTreeSetTest extends BinarySearchTreeTest<IntervalTreeSet<In
     final int count = random.nextInt(TEST_TREE_MIN_SIZE, TEST_TREE_MAX_SIZE);
     final ArrayList<Interval<Integer>> keys = new ArrayList<>(count);
     for (int i = 0, min = 0; i < count; ++i) // [RA]
-      keys.add(new Interval<>(min += random.nextInt(100), random.nextInt(min, min + 100)));
+      keys.add(new Interval<>(min += random.nextInt(100), random.nextInt(min + 1, min + 100)));
 
     return keys;
   }
@@ -137,7 +137,7 @@ public class IntervalTreeSetTest extends BinarySearchTreeTest<IntervalTreeSet<In
     final ArrayList<Interval<Integer>> intervals = new ArrayList<>(count);
     for (int i = 0; i < count; ++i) { // [RA]
       final int min = random.nextInt(intervalMax - 1);
-      final int max = min + random.nextInt(intervalMax - min);
+      final int max = random.nextInt(min + 1, intervalMax);
       intervals.add(new Interval<>(min, max));
     }
 
@@ -168,7 +168,7 @@ public class IntervalTreeSetTest extends BinarySearchTreeTest<IntervalTreeSet<In
     test(onError -> {
       assertSpecificTreeInvariants(tree, onError);
 
-      final Interval<Integer> i = new Interval<Integer>(1, 2);
+      final Interval<Integer> i = new Interval<>(1, 2);
       final Interval<Integer>[] d = tree.difference(i);
       assertEquals(1, d.length, onError);
       assertEquals(i, d[0], onError);
@@ -183,7 +183,7 @@ public class IntervalTreeSetTest extends BinarySearchTreeTest<IntervalTreeSet<In
       assertEquals(next, tree.higher(prev), onError);
       assertEquals(next, tree.ceiling(next), onError);
       if (next != null) {
-        final Interval<Integer> i = next.newInterval((prev.getMin() + next.getMin()) / 2, (prev.getMax() + next.getMax()) / 2);
+        final Interval<Integer> i = new Interval<>((prev.getMin() + next.getMin()) / 2, (prev.getMax() + next.getMax()) / 2);
         assertEquals(next, tree.ceiling(i), onError);
       }
     }
@@ -196,7 +196,7 @@ public class IntervalTreeSetTest extends BinarySearchTreeTest<IntervalTreeSet<In
       assertEquals(prev, tree.lower(next), onError);
       assertEquals(next, tree.floor(next), onError);
       if (prev != null) {
-        final Interval<Integer> i = next.newInterval((prev.getMin() + next.getMin()) / 2, (prev.getMax() + next.getMax()) / 2);
+        final Interval<Integer> i = new Interval<>((prev.getMin() + next.getMin()) / 2, (prev.getMax() + next.getMax()) / 2);
         assertEquals(prev, tree.floor(i), onError);
       }
     }
@@ -216,38 +216,39 @@ public class IntervalTreeSetTest extends BinarySearchTreeTest<IntervalTreeSet<In
 
       final Interval<Integer>[] datas = tree.toArray(new Interval[size]);
 
-      final int from = random.nextInt(1, size - 2);
-      final int to = random.nextInt(from, size - 1);
+      final int fromIndex = random.nextInt(1, size - 2);
+      final int toIndex = random.nextInt(fromIndex, size - 1);
 
-      final Interval<Integer> start = datas[from];
-      final Interval<Integer> end = datas[to];
+      final Interval<Integer> from = datas[fromIndex];
+      final Interval<Integer> to = datas[toIndex];
 
-      final Integer startMin = start.getMin();
-      final Integer startMax = start.getMax();
-      final Integer endMin = end.getMin();
-      final Integer endMax = end.getMax();
+      final Integer fromMin = from.getMin();
+      final Integer fromMax = from.getMax();
+      final Integer toMin = to.getMin();
+      final Integer toMax = to.getMax();
 
-      final Integer beforeMinStart = (datas[from - 1].getMax() + startMin) / 2;
-      final Integer beforeMinEnd = (datas[to - 1].getMax() + endMin) / 2;
-      final Integer onMinStart = startMin;
-      final Integer onMinEnd = endMin;
-      final Integer insideStart = (startMin + startMax) / 2;
-      final Integer insideEnd = (endMin + endMax) / 2;
-      final Integer onMaxStart = startMax;
-      final Integer onMaxEnd = endMax;
-      final Integer afterMaxStart = (startMax + datas[from + 1].getMin()) / 2;
-      final Integer afterMaxEnd = (endMax + datas[to + 1].getMin()) / 2;
+      final Integer beforeMinFrom = (datas[fromIndex - 1].getMax() + fromMin) / 2;
+      final Integer onMinFrom = fromMin;
+      final Integer insideFrom = (fromMin + fromMax) / 2;
+      final Integer onMaxFrom = fromMax;
+      final Integer afterMaxFrom = (fromMax + datas[fromIndex + 1].getMin()) / 2;
 
-      final CombinationIterator<Integer> combinations = new CombinationIterator<>(Arrays.asList(beforeMinStart, onMinStart, insideStart, onMaxStart, afterMaxStart), Arrays.asList(beforeMinEnd, onMinEnd, insideEnd, onMaxEnd, afterMaxEnd));
+      final Integer beforeMinTo = (datas[toIndex - 1].getMax() + toMin) / 2;
+      final Integer onMinTo = toMin;
+      final Integer insideTo = (toMin + toMax) / 2;
+      final Integer onMaxTo = toMax;
+      final Integer afterMaxTo = (toMax + datas[toIndex + 1].getMin()) / 2;
+
+      final CombinationIterator<Integer> combinations = new CombinationIterator<>(Arrays.asList(beforeMinFrom, onMinFrom, insideFrom, onMaxFrom, afterMaxFrom), Arrays.asList(beforeMinTo, onMinTo, insideTo, onMaxTo, afterMaxTo));
       while (combinations.hasNext()) {
         final Integer[] combination = combinations.next();
-        if (combination[0] > combination[1])
+        if (combination[0] >= combination[1])
           continue;
 
         test(onError -> {
           final Interval<Integer> range = new Interval<>(combination[0], combination[1]);
-          final Integer min = range.getMin();
-          final Integer max = range.getMax();
+          final Integer rangeMin = range.getMin();
+          final Integer rangeMax = range.getMax();
 
           final Interval<Integer>[] diffs = tree.difference(range);
           final int len = diffs.length;
@@ -259,35 +260,35 @@ public class IntervalTreeSetTest extends BinarySearchTreeTest<IntervalTreeSet<In
             assertSpecificTreeInvariants(clone, onError);
           }
           else {
-            int i = from, j = 0;
+            int i = fromIndex, j = 0;
             final ArrayList<Interval<Integer>> seq = new ArrayList<>();
-            if (min == insideStart || min == onMinStart || min == onMaxStart || min == afterMaxStart)
+            if (rangeMin == insideFrom || rangeMin == onMinFrom || rangeMin == onMaxFrom || rangeMin == afterMaxFrom)
               seq.add(datas[i++]);
 
             Interval<Integer> diff, data;
             seq.add(diff = diffs[j++]);
             seq.add(data = datas[i++]);
 
-            assertEquals(min == insideStart || min == onMinStart || min == onMaxStart ? startMax + 1 : min, diff.getMin(), onError);
+            assertEquals(diff.getMin(), rangeMin.equals(insideFrom) || rangeMin.equals(onMinFrom) ? fromMax : rangeMin, onError);
             if (j < len) {
-              assertEquals(diff.getMax() + 1, data.getMin(), onError);
+              assertEquals(diff.getMax(), data.getMin(), onError);
               do {
                 seq.add(diff = diffs[j++]);
-                assertEquals(data.getMax() + 1, diff.getMin(), onError);
+                assertEquals(diff.getMin(), data.getMax(), onError);
                 seq.add(data = datas[i++]);
 
                 if (j == len)
                   break;
 
-                assertEquals(diff.getMax() + 1, data.getMin(), onError);
+                assertEquals(diff.getMax(), data.getMin(), onError);
               }
               while (true);
             }
-            assertEquals(diff.getMax(), max == insideEnd || max == onMaxEnd || max == data.getMin() ? data.getMin() - 1 : max, onError);
+            assertEquals(diff.getMax(), rangeMax.equals(insideTo) || rangeMax.equals(onMaxTo) || data.getMin() <= rangeMax && rangeMax <= data.getMax() ? data.getMin() : rangeMax, onError);
 
             // Assert that each value between range.min and range.max is contained in the `seq` list
             int cursor = range.getMin();
-            for (int l = 0; cursor <= range.getMax();) {
+            for (int l = 0; cursor < rangeMax;) { // [N]
               final Interval<Integer> interval = seq.get(l);
               if (interval.contains(cursor))
                 ++cursor;
@@ -295,7 +296,7 @@ public class IntervalTreeSetTest extends BinarySearchTreeTest<IntervalTreeSet<In
                 fail(onError);
             }
 
-            assertEquals(range.getMax(), cursor - 1, onError);
+            assertEquals(range.getMax(), cursor, onError);
           }
         });
       }
@@ -310,8 +311,8 @@ public class IntervalTreeSetTest extends BinarySearchTreeTest<IntervalTreeSet<In
         final IntervalTreeSet<Integer> tree = new IntervalTreeSet<>(createRandomIntervalList(c, m));
         test(onError -> {
           final IntervalTreeSet<Integer> clone = tree.clone();
-          final ArrayList<Interval<Integer>> keys = CollectionUtil.asCollection(new ArrayList<>(), tree.toArray(new Interval[tree.size()]));
           int size = clone.size();
+          final ArrayList<Interval<Integer>> keys = CollectionUtil.asCollection(new ArrayList<>(), tree.toArray(new Interval[size]));
           final Iterator<Interval<Integer>> keyIterator = keys.iterator();
           for (int i = 0; keyIterator.hasNext(); ++i) { //[I]
             final Interval<Integer> keyToDelete = keyIterator.next();
@@ -339,8 +340,8 @@ public class IntervalTreeSetTest extends BinarySearchTreeTest<IntervalTreeSet<In
         final IntervalTreeSet<Integer> tree = new IntervalTreeSet<>(createRandomIntervalList(c, m));
         test(onError -> {
           final IntervalTreeSet<Integer> clone = tree.clone();
-          final ArrayList<Interval<Integer>> keys = CollectionUtil.asCollection(new ArrayList<>(), tree.toArray(new Interval[tree.size()]));
           int size = clone.size();
+          final ArrayList<Interval<Integer>> keys = CollectionUtil.asCollection(new ArrayList<>(), tree.toArray(new Interval[size]));
           final ListIterator<Interval<Integer>> keyIterator = keys.listIterator(size);
           for (int i = 0; keyIterator.hasPrevious(); ++i) { //[I]
             final Interval<Integer> keyToDelete = keyIterator.previous();
@@ -361,7 +362,7 @@ public class IntervalTreeSetTest extends BinarySearchTreeTest<IntervalTreeSet<In
   }
 
   @Test
-  public void testOverlaps() {
+  public void testIntersects() {
     for (int r = 0; r < repeat / 1000; ++r) { // [N]
       for (int c = 2, m = 4, f = 8; c <= 65536; c += f += 1, m = c * 2) { // [N]
         final ArrayList<Interval<Integer>> keys = createRandomIntervalList(c, m);
@@ -372,56 +373,68 @@ public class IntervalTreeSetTest extends BinarySearchTreeTest<IntervalTreeSet<In
         final Interval<Integer>[] array = tree.toArray(new Interval[size]);
 
         test(onError -> {
-          Interval<Integer> interval = array[0];
-          final Interval<Integer> beforeMin = new Interval<>(interval.prevValue(interval.prevValue(interval.getMin())), interval.prevValue(interval.getMin()));
+          Interval<Integer> data = array[0];
+          final Interval<Integer> beforeMin = new Interval<>(data.getMin() - 2, data.getMin() - 1);
 
           assertFalse(list.intersects(beforeMin), onError);
           assertFalse(tree.intersects(beforeMin), onError);
 
-          interval = array[array.length - 1];
-          final Interval<Integer> afterMax = new Interval<>(interval.nextValue(interval.getMax()), interval.nextValue(interval.nextValue(interval.getMax())));
+          data = array[array.length - 1];
+          final Interval<Integer> afterMax = new Interval<>(data.getMax() + 1, data.getMax() + 2);
 
           assertFalse(list.intersects(afterMax), onError);
           assertFalse(tree.intersects(afterMax), onError);
 
-          for (int i = 0; i < size; ++i) { // [A]
-            interval = array[i];
-            if (interval.getMax() - interval.getMin() == 0)
-              continue;
+          Interval<Integer> prev = null;
+          Integer dataMin, dataMax;
+          for (int i = 0; i < size; ++i, prev = data) { // [A]
+            data = array[i];
+            dataMin = data.getMin();
+            dataMax = data.getMax();
 
-            final Integer prevMin = interval.prevValue(interval.getMin());
-            final Integer prevMax = interval.prevValue(interval.getMax());
-            final Integer nextMin = interval.nextValue(interval.getMin());
-            final Integer nextMax = interval.nextValue(interval.getMax());
+            final Integer prevMin = dataMin - 1;
+            final Integer prevMax = dataMax - 1;
+            final Integer nextMin = dataMin + 1;
+            final Integer nextMax = dataMax + 1;
 
-            final Interval<Integer> pastLeft = new Interval<>(prevMin, prevMin);
             final Interval<Integer> onLeft = new Interval<>(prevMin, nextMin);
-            final Interval<Integer> inLeft = new Interval<>(interval.getMin(), prevMax);
-            final Interval<Integer> match = new Interval<>(interval.getMin(), interval.getMax());
-            final Interval<Integer> inRight = new Interval<>(nextMin, interval.getMax());
+            final Interval<Integer> match = new Interval<>(dataMin, dataMax);
             final Interval<Integer> onRight = new Interval<>(prevMax, nextMax);
-            final Interval<Integer> pastRight = new Interval<>(nextMax, nextMax);
 
-            assertFalse(list.intersects(pastLeft), onError);
-            assertFalse(tree.intersects(pastLeft), onError);
+            final Interval<Integer> beforeLeft = new Interval<>(prevMin - 1, prevMin);
+            // It may happen that the generated data has `beforeLeft` intersect with `prev`
+            if (i == 0 || !beforeLeft.intersects(prev)) {
+              assertFalse(list.intersects(beforeLeft), onError);
+              assertFalse(tree.intersects(beforeLeft), onError);
+            }
 
             assertTrue(list.intersects(onLeft), onError);
             assertTrue(tree.intersects(onLeft), onError);
 
-            assertTrue(list.intersects(inLeft), onError);
-            assertTrue(tree.intersects(inLeft), onError);
+            if (dataMin < prevMax) {
+              final Interval<Integer> inLeft = new Interval<>(dataMin, prevMax);
+              assertTrue(list.intersects(inLeft), onError);
+              assertTrue(tree.intersects(inLeft), onError);
+            }
 
             assertTrue(list.intersects(match), onError);
             assertTrue(tree.intersects(match), onError);
 
-            assertTrue(list.intersects(inRight), onError);
-            assertTrue(tree.intersects(inRight), onError);
+            if (nextMin < dataMax) {
+              final Interval<Integer> inRight = new Interval<>(nextMin, dataMax);
+              assertTrue(list.intersects(inRight), onError);
+              assertTrue(tree.intersects(inRight), onError);
+            }
 
             assertTrue(list.intersects(onRight), onError);
             assertTrue(tree.intersects(onRight), onError);
 
-            assertFalse(list.intersects(pastRight), onError);
-            assertFalse(tree.intersects(pastRight), onError);
+            final Interval<Integer> afterRight = new Interval<>(nextMax, nextMax + 1);
+            // It may happen that the generated data has `afterRight` intersect with `array[i + 1]`
+            if (i == size - 1 || !afterRight.intersects(array[i + 1])) {
+              assertFalse(list.intersects(afterRight), onError);
+              assertFalse(tree.intersects(afterRight), onError);
+            }
           }
         });
       }
@@ -458,7 +471,7 @@ public class IntervalTreeSetTest extends BinarySearchTreeTest<IntervalTreeSet<In
   private void permute(final int maxIntervals, final int m1, final int m2, final long[] times) {
     final Interval<Integer>[] intervals = new Interval[maxIntervals];
     for (int i = 0, j = 0; i < maxIntervals; j = i * 2 + i % m2) { // [N]
-      intervals[i] = new Interval<>(j, j * (i % m1 + 1) + i % m2);
+      intervals[i] = new Interval<>(j, j * (i % m1 + 1) + i % m2 + 1);
       for (final PermutationIterator<Interval<Integer>> iterator = new PermutationIterator<>(intervals, 0, ++i); iterator.hasNext(); test(iterator.next(), times)); // [X]
     }
   }
@@ -470,11 +483,7 @@ public class IntervalTreeSetTest extends BinarySearchTreeTest<IntervalTreeSet<In
       final IntervalTreeSet<Integer> tree = test(keys, new IntervalTreeSet<Integer>(), added, false, times, 1, onError);
 
       assertEquals(array.size(), tree.size(), onError);
-      if (!array.toString().equals(tree.toString())) {
-        System.err.println(keys.toString() + "\n  Expected: " + array + "\n   Actual: " + tree);
-        fail(keys.toString());
-      }
-
+      assertEquals(array.toString(), tree.toString(), onError(onError, () -> keys.toString()));
       assertSpecificTreeInvariants(tree, onError);
     });
   }
@@ -503,55 +512,5 @@ public class IntervalTreeSetTest extends BinarySearchTreeTest<IntervalTreeSet<In
 
     times[index] += time;
     return impl;
-  }
-
-  @Test
-  public void simpleTest() {
-    test(onError -> {
-      final IntervalTreeSet<Integer> t = new IntervalTreeSet<>();
-      t.add(new Interval<Integer>(6, 7));
-      assertEquals("[[6,7]]", t.toString(), onError);
-      t.add(new Interval<Integer>(6, 6));
-      assertEquals("[[6,7]]", t.toString(), onError);
-
-      t.add(new Interval<Integer>(15, 16));
-      assertEquals("[[6,7],[15,16]]", t.toString(), onError);
-
-      t.add(new Interval<Integer>(8, 9));
-      assertEquals("[[6,9],[15,16]]", t.toString(), onError);
-
-      t.add(new Interval<Integer>(13, 14));
-      assertEquals("[[6,9],[13,16]]", t.toString(), onError);
-
-      t.add(new Interval<Integer>(4, 5));
-      assertEquals("[[4,9],[13,16]]", t.toString(), onError);
-
-      t.add(new Interval<Integer>(17, 18));
-      assertEquals("[[4,9],[13,18]]", t.toString(), onError);
-
-      t.add(new Interval<Integer>(3, 4));
-      assertEquals("[[3,9],[13,18]]", t.toString(), onError);
-
-      t.add(new Interval<Integer>(9, 10));
-      assertEquals("[[3,10],[13,18]]", t.toString(), onError);
-
-      t.add(new Interval<Integer>(12, 13));
-      assertEquals("[[3,10],[12,18]]", t.toString(), onError);
-
-      t.add(new Interval<Integer>(18, 19));
-      assertEquals("[[3,10],[12,19]]", t.toString(), onError);
-
-      t.add(new Interval<Integer>(10, 11));
-      assertEquals("[[3,19]]", t.toString(), onError);
-
-      t.add(new Interval<Integer>(11, 12));
-      assertEquals("[[3,19]]", t.toString(), onError);
-
-      t.add(new Interval<Integer>(8, 11));
-      assertEquals("[[3,19]]", t.toString(), onError);
-
-      t.add(new Interval<Integer>(7, 17));
-      assertEquals("[[3,19]]", t.toString(), onError);
-    });
   }
 }

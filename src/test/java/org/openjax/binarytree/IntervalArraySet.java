@@ -30,7 +30,7 @@ import java.util.SortedSet;
 import org.libj.util.CollectionUtil;
 import org.libj.util.Interval;
 
-public class IntervalArraySet<T extends Comparable<T> & Serializable> implements IntervalSet<T> {
+public class IntervalArraySet<T extends Comparable<? super T> & Serializable> implements IntervalSet<T> {
   @SuppressWarnings("rawtypes")
   private static final Comparator<Interval> minComparator = (final Interval o1, final Interval o2) -> o1.getMin().compareTo(o2.getMax());
   @SuppressWarnings("rawtypes")
@@ -84,7 +84,7 @@ public class IntervalArraySet<T extends Comparable<T> & Serializable> implements
         changed |= add(l.get(i));
     }
     else {
-      for (final ListIterator<? extends Interval<T>> iterator = l.listIterator(fromIndex); fromIndex < toIndex; ++fromIndex)
+      for (final ListIterator<? extends Interval<T>> iterator = l.listIterator(fromIndex); fromIndex < toIndex; ++fromIndex) // [I]
         changed |= add(iterator.next());
     }
 
@@ -105,100 +105,6 @@ public class IntervalArraySet<T extends Comparable<T> & Serializable> implements
   }
 
   /**
-   * Compares the first provided {@link Interval} with the second provided {@link Interval} for order, and returns an integer value
-   * of {@code -2}, {@code -1}, {@code 0}, {@code 1} or {@code 2}, based on the following logic:
-   *
-   * <ul>
-   * <li>
-   * No touch: {@code -2}
-   * <pre>
-   *              ___________
-   *              |   that  |
-   *              -----------
-   * ___________
-   * |   this  |
-   * -----------
-   * </pre>
-   * </li>
-   * <li>
-   * Yes touch: {@code -1}
-   * <pre>
-   *           ___________
-   *           |   that  |
-   *           -----------
-   * ___________
-   * |   this  |
-   * -----------
-   * </pre>
-   * </li>
-   * <li>
-   * Yes touch: {@code 0}
-   * <pre>
-   * ___________
-   * |   that  |
-   * -----------
-   * ________
-   * | this |
-   * --------
-   * </pre>
-   * </li>
-   * <li>
-   * Yes touch: {@code 0}
-   * <pre>
-   * ________
-   * | that |
-   * --------
-   * ___________
-   * |   this  |
-   * -----------
-   * </pre>
-   * </li>
-   * <li>
-   * Yes touch: {@code 1}
-   * <pre>
-   * ___________
-   * |   that  |
-   * -----------
-   *           ___________
-   *           |   this  |
-   *           -----------
-   * </pre>
-   * </li>
-   * <li>
-   * No touch: {@code 2}
-   * <pre>
-   * ___________
-   * |   that  |
-   * -----------
-   *               ___________
-   *               |   this  |
-   *               -----------
-   * </pre>
-   * </li>
-   * </ul>
-   *
-   * @param key The first {@link Interval} with which to determine touch.
-   * @param data The second {@link Interval} with which to determine touch.
-   * @return The value as described above.
-   * @throws NullPointerException If the specified {@link Interval} is null.
-   */
-  @SuppressWarnings({"rawtypes", "unchecked"})
-  static int compareTo(final Interval key, final Interval data) {
-    final Comparable keyMin = key.getMin();
-    final Comparable keyPrevMin = data.prevValue(keyMin);
-    final Comparable dataMax = data.getMax();
-    if (keyPrevMin.compareTo(dataMax) > 0)
-      return 2;
-
-    final Comparable keyNextMax = key.nextValue(key.getMax());
-    final Comparable dataMin = data.getMin();
-    if (keyNextMax.compareTo(dataMin) < 0)
-      return -2;
-
-    return keyMin.compareTo(dataMin);
-  }
-
-  /**
    * Add the interval defined by the provided {@code (x,y)} values to this {@link IntervalArraySet}. If the provided interval
    * overlaps one or more existing interval, the overlapping intervals are merged.
    *
@@ -216,13 +122,13 @@ public class IntervalArraySet<T extends Comparable<T> & Serializable> implements
     int fromIndex = CollectionUtil.binaryClosestSearch(data, 0, size, key, minComparator);
     if (fromIndex == size) {
       final Interval<T> f = data.get(--fromIndex);
-      if (iMin.compareTo(f.nextValue(f.getMax())) > 0)
+      if (iMin.compareTo(f.getMax()) > 0)
         return data.add(key);
     }
 
-    int c0 = compareTo(key, data.get(fromIndex));
+    int c0 = key.compareTo(data.get(fromIndex));
     if (c0 < 0 && fromIndex > 0) {
-      final int c1 = compareTo(key, data.get(--fromIndex));
+      final int c1 = key.compareTo(data.get(--fromIndex));
       if (c1 != 2)
         c0 = c1;
       else
@@ -240,7 +146,7 @@ public class IntervalArraySet<T extends Comparable<T> & Serializable> implements
       b = key.getMax();
     }
     else {
-      c0 = compareTo(key, data.get(toIndex));
+      c0 = key.compareTo(data.get(toIndex));
       if (c0 >= -1) {
         b = data.get(toIndex).getMax();
         ++toIndex;
@@ -252,13 +158,13 @@ public class IntervalArraySet<T extends Comparable<T> & Serializable> implements
 
     if (toIndex - fromIndex != 1) {
       data.removeRange(fromIndex, toIndex);
-      data.add(fromIndex, key.newInterval(a, b));
+      data.add(fromIndex, new Interval<>(a, b));
     }
     else if (data.get(fromIndex).equals(a, b)) {
       return false;
     }
     else {
-      data.set(fromIndex, key.newInterval(a, b));
+      data.set(fromIndex, new Interval<>(a, b));
     }
 
     return true;
@@ -273,12 +179,19 @@ public class IntervalArraySet<T extends Comparable<T> & Serializable> implements
   @Override
   public boolean intersects(final Interval<T> key) {
     final int size = data.size();
-    final int i = CollectionUtil.binaryClosestSearch(data, 0, size, key, minComparator);
-    if (i >= size || data.get(i).getMin().compareTo(key.getMax()) > 0)
+    int i = CollectionUtil.binaryClosestSearch(data, 0, size, key, minComparator);
+    if (i >= size)
       return false;
 
-    final int j = CollectionUtil.binaryClosestSearch(data, i, size, key, maxComparator);
-    return j >= size || data.get(j).getMax().compareTo(key.getMin()) >= 0;
+    int j = CollectionUtil.binaryClosestSearch(data, i, size, key, maxComparator);
+    if (j >= size)
+      --j;
+
+    while (i <= j)
+      if (key.intersects(data.get(i++)))
+        return true;
+
+    return false;
   }
 
   /**
@@ -298,55 +211,55 @@ public class IntervalArraySet<T extends Comparable<T> & Serializable> implements
     if (fromIndex >= size)
       return EMPTY;
 
-    final Interval<T> f = data.get(fromIndex);
-    final T iMax = key.getMax();
-    final T fMin = f.prevValue(f.getMin());
-    if (fromIndex >= size || fMin.compareTo(iMax) >= 0)
+    final Interval<T> from = data.get(fromIndex);
+    final T keyMax = key.getMax();
+    final T fromMin = from.getMin();
+    if (fromIndex >= size || fromMin.compareTo(keyMax) >= 0)
       return EMPTY;
 
     int toIndex = CollectionUtil.binaryClosestSearch(data, fromIndex, size, key, maxComparator);
     if (toIndex == size)
       --toIndex;
 
-    final Interval<T> t = data.get(toIndex);
-    final T iMin = key.getMin();
-    final T tMax = t.nextValue(t.getMax());
-    if (tMax.compareTo(iMin) < 0)
+    final Interval<T> to = data.get(toIndex);
+    final T keyMin = key.getMin();
+    final T toMax = to.getMax();
+    if (toMax.compareTo(keyMin) < 0)
       return EMPTY;
 
-    if (iMax.compareTo(fMin) <= 0 || iMin.compareTo(tMax) >= 0)
+    if (keyMax.compareTo(fromMin) <= 0 || keyMin.compareTo(toMax) >= 0)
       return new Interval[] {key};
 
     final Interval<T>[] diff;
-    if (iMin.compareTo(fMin) <= 0) {
-      if (iMax.compareTo(tMax) >= 0) {
+    if (keyMin.compareTo(fromMin) < 0) {
+      if (keyMax.compareTo(toMax) >= 0) {
         diff = getGaps(fromIndex, toIndex, true, true);
-        diff[0] = key.newInterval(iMin, fMin);
-        diff[diff.length - 1] = key.newInterval(tMax, iMax);
+        diff[0] = new Interval<>(keyMin, fromMin);
+        diff[diff.length - 1] = new Interval<>(toMax, keyMax);
       }
       else {
         diff = getGaps(fromIndex, toIndex, true, false);
-        if (iMax.compareTo(tMax) <= 0 && diff.length > 1) {
+        if (keyMax.compareTo(toMax) <= 0 && diff.length > 1) {
           final int len1 = diff.length - 1;
           final Interval<T> last = diff[len1];
-          if (last.getMax().compareTo(iMax) > 0)
-            diff[len1] = key.newInterval(last.nextValue(last.getMin()), iMax);
+          if (last.getMax().compareTo(keyMax) > 0)
+            diff[len1] = new Interval<>(last.getMin(), keyMax);
         }
 
-        diff[0] = key.newInterval(iMin, fMin);
+        diff[0] = new Interval<>(keyMin, fromMin);
       }
     }
-    else if (iMax.compareTo(tMax) >= 0) {
+    else if (keyMax.compareTo(toMax) >= 0) {
       diff = getGaps(fromIndex, toIndex, false, true);
-      diff[diff.length - 1] = key.newInterval(tMax, iMax);
+      diff[diff.length - 1] = new Interval<>(toMax, keyMax);
     }
     else {
       diff = getGaps(fromIndex, toIndex, false, false);
-      if (iMax.compareTo(tMax) <= 0 && diff.length > 0) {
+      if (keyMax.compareTo(toMax) <= 0 && diff.length > 0) {
         final int len1 = diff.length - 1;
         final Interval<T> last = diff[len1];
-        if (last.getMax().compareTo(iMax) > 0)
-          diff[len1] = key.newInterval(last.nextValue(last.getMin()), iMax);
+        if (last.getMax().compareTo(keyMax) > 0)
+          diff[len1] = new Interval<>(last.getMin(), keyMax);
       }
     }
 
@@ -369,9 +282,9 @@ public class IntervalArraySet<T extends Comparable<T> & Serializable> implements
       ++len;
 
     final Interval<T>[] gaps = new Interval[len];
-    for (Interval<T> next, prev = data.get(fromIndex); ++fromIndex <= toIndex; prev = next) {
+    for (Interval<T> next, prev = data.get(fromIndex); ++fromIndex <= toIndex; prev = next) { // [RA]
       next = data.get(fromIndex);
-      gaps[i++] = prev.newInterval(prev.nextValue(prev.getMax()), next.prevValue(next.getMin()));
+      gaps[i++] = new Interval<>(prev.getMax(), next.getMin());
     }
 
     return gaps;
@@ -405,7 +318,7 @@ public class IntervalArraySet<T extends Comparable<T> & Serializable> implements
       return "[]";
 
     final StringBuilder b = new StringBuilder();
-    for (int i = 0; i < i$;)
+    for (int i = 0; i < i$;) // [RA]
       b.append(',').append(data.get(i++));
 
     b.setCharAt(0, '[');
