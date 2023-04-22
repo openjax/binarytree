@@ -1,14 +1,14 @@
-# B-Tree
+# Binary Tree
 
-[![Build Status](https://github.com/openjax/btree/actions/workflows/build.yml/badge.svg)](https://github.com/openjax/btree/actions/workflows/build.yml)
-[![Coverage Status](https://coveralls.io/repos/github/openjax/btree/badge.svg)](https://coveralls.io/github/openjax/btree)
-[![Javadocs](https://www.javadoc.io/badge/org.openjax/btree.svg)](https://www.javadoc.io/doc/org.openjax/btree)
-[![Released Version](https://img.shields.io/maven-central/v/org.openjax/btree.svg)](https://mvnrepository.com/artifact/org.openjax/btree)
-![Snapshot Version](https://img.shields.io/nexus/s/org.openjax/btree?label=maven-snapshot&server=https%3A%2F%2Foss.sonatype.org)
+[![Build Status](https://github.com/openjax/binarytree/actions/workflows/build.yml/badge.svg)](https://github.com/openjax/binarytree/actions/workflows/build.yml)
+[![Coverage Status](https://coveralls.io/repos/github/openjax/binarytree/badge.svg)](https://coveralls.io/github/openjax/binarytree)
+[![Javadocs](https://www.javadoc.io/badge/org.openjax/binarytree.svg)](https://www.javadoc.io/doc/org.openjax/binarytree)
+[![Released Version](https://img.shields.io/maven-central/v/org.openjax/binarytree.svg)](https://mvnrepository.com/artifact/org.openjax/binarytree)
+![Snapshot Version](https://img.shields.io/nexus/s/org.openjax/binarytree?label=maven-snapshot&server=https%3A%2F%2Foss.sonatype.org)
 
 ## Introduction
 
-B-Tree provides implementations of common Binary Tree Data Structures.
+Binary Tree provides implementations of common Binary Tree Data Structures.
 
 ## Contributing
 
