@@ -19,20 +19,31 @@ package org.openjax.binarytree;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
+import org.libj.util.ArrayUtil;
 import org.libj.util.Interval;
 
 abstract class IntervalSetTest {
   static class IntervalArraySetTest extends IntervalSetTest {
     @Override
-    IntervalSet<Integer> newTree() {
+    IntervalArraySet<Integer> newTree() {
       return new IntervalArraySet<>();
+    }
+
+    @Override
+    IntervalArraySet<Integer> clone(final IntervalSet<Integer> s) {
+      return ((IntervalArraySet<Integer>)s).clone();
     }
   }
 
   static class IntervalTreeSetTest extends IntervalSetTest {
     @Override
-    IntervalSet<Integer> newTree() {
+    IntervalTreeSet<Integer> newTree() {
       return new IntervalTreeSet<>();
+    }
+
+    @Override
+    IntervalTreeSet<Integer> clone(IntervalSet<Integer> s) {
+      return ((IntervalTreeSet<Integer>)s).clone();
     }
   }
 
@@ -50,11 +61,12 @@ abstract class IntervalSetTest {
     return s;
   }
 
-  private static Interval<Integer> i(final int min, final int max) {
+  private static Interval<Integer> i(final Integer min, final Integer max) {
     return new Interval<>(min, max);
   }
 
   abstract IntervalSet<Integer> newTree();
+  abstract IntervalSet<Integer> clone(IntervalSet<Integer> s);
 
   @Test
   public void testXL() {
@@ -144,6 +156,40 @@ abstract class IntervalSetTest {
     assertArrayEquals(new Interval[] {i(4, 5)}, s7.difference(i(2, 6)));
     assertArrayEquals(new Interval[] {i(7, 9)}, s7.difference(i(6, 10)));
     assertArrayEquals(new Interval[] {i(7, 9), i(11, 15)}, s7.difference(i(6, 15)));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testUnbounded() {
+    final IntervalSet<Integer> s = newTree();
+    for (int i = 0; i < 1000; i += 6)
+      s.add(new Interval<>(i, i + 4));
+
+    for (int i = 0, i$ = s.size(); i < i$; ++i) {
+      final Object[] array = s.toArray();
+      final Interval<Integer> interval = (Interval<Integer>)array[i];
+      for (int v = interval.getMin(); v <= interval.getMax() + 1; ++v) {
+        final Object[] result = ArrayUtil.splice(array, 0, i);
+        result[0] = new Interval<>(null, Math.max(v, interval.getMax()));
+
+        final IntervalSet<Integer> c = clone(s);
+        c.add(new Interval<>(null, v));
+        assertArrayEquals(result, c.toArray());
+      }
+    }
+
+    for (int i = s.size() - 1; i >= 0; --i) {
+      final Object[] array = s.toArray();
+      final Interval<Integer> interval = (Interval<Integer>)array[i];
+      for (int v = interval.getMax(); v >= interval.getMin() - 1; --v) {
+        final Object[] result = ArrayUtil.splice(array, i + 1);
+        result[result.length - 1] = new Interval<>(Math.min(interval.getMin(), v), null);
+
+        final IntervalSet<Integer> c = clone(s);
+        c.add(new Interval<>(v, null));
+        assertArrayEquals(result, c.toArray());
+      }
+    }
   }
 
   @Test

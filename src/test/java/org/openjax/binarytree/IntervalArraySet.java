@@ -30,9 +30,9 @@ import java.util.SortedSet;
 import org.libj.util.CollectionUtil;
 import org.libj.util.Interval;
 
-public class IntervalArraySet<T extends Comparable<? super T> & Serializable> implements IntervalSet<T> {
+public class IntervalArraySet<T extends Comparable<? super T> & Serializable> implements Cloneable, IntervalSet<T> {
   @SuppressWarnings("rawtypes")
-  private static final Comparator<Interval> minComparator = (final Interval o1, final Interval o2) -> o1.getMin().compareTo(o2.getMax());
+  private static final Comparator<Interval> minComparator = (final Interval o1, final Interval o2) -> o2.getMax() == null ? -1 : o1.getMin().compareTo(o2.getMax());
   @SuppressWarnings("rawtypes")
   private static final Comparator<Interval> maxComparator = (final Interval o1, final Interval o2) -> o1.getMax().compareTo(o2.getMax());
   @SuppressWarnings("rawtypes")
@@ -45,9 +45,10 @@ public class IntervalArraySet<T extends Comparable<? super T> & Serializable> im
     }
   }
 
-  private final IntervalArrayIntList data = new IntervalArrayIntList();
+  private final IntervalArrayIntList data;
 
   public IntervalArraySet(final Collection<Interval<T>> c) {
+    this();
     addAll(c);
   }
 
@@ -57,10 +58,16 @@ public class IntervalArraySet<T extends Comparable<? super T> & Serializable> im
   }
 
   public IntervalArraySet(final Interval<T>[] a, final int fromIndex, final int toIndex) {
+    this();
     addAll(a, fromIndex, toIndex);
   }
 
   public IntervalArraySet() {
+    this.data = new IntervalArrayIntList();
+  }
+
+  private IntervalArraySet(final IntervalArrayIntList data) {
+    this.data = data;
   }
 
   @Override
@@ -118,12 +125,15 @@ public class IntervalArraySet<T extends Comparable<? super T> & Serializable> im
     if (size == 0)
       return data.add(key);
 
-    final T iMin = key.getMin();
-    int fromIndex = CollectionUtil.binaryClosestSearch(data, 0, size, key, minComparator);
-    if (fromIndex == size) {
-      final Interval<T> f = data.get(--fromIndex);
-      if (iMin.compareTo(f.getMax()) > 0)
-        return data.add(key);
+    final T keyMin = key.getMin();
+    int fromIndex = 0;
+    if (keyMin != null) {
+      fromIndex = CollectionUtil.binaryClosestSearch(data, 0, size, key, minComparator);
+      if (fromIndex == size) {
+        final Interval<T> f = data.get(--fromIndex);
+        if (keyMin.compareTo(f.getMax()) > 0)
+          return data.add(key);
+      }
     }
 
     int c0 = key.compareTo(data.get(fromIndex));
@@ -135,36 +145,37 @@ public class IntervalArraySet<T extends Comparable<? super T> & Serializable> im
         ++fromIndex;
     }
 
-    final T a, b;
+    T min, max;
     if (c0 < 0)
-      a = iMin;
+      min = keyMin;
     else
-      a = data.get(fromIndex).getMin();
+      min = data.get(fromIndex).getMin();
 
-    int toIndex = CollectionUtil.binaryClosestSearch(data, fromIndex, size, key, maxComparator);
-    if (toIndex == size) {
-      b = key.getMax();
-    }
-    else {
-      c0 = key.compareTo(data.get(toIndex));
-      if (c0 >= -1) {
-        b = data.get(toIndex).getMax();
-        ++toIndex;
-      }
-      else {
-        b = key.getMax();
+    int toIndex = size;
+    max = key.getMax();
+    if (max != null) {
+      toIndex = CollectionUtil.binaryClosestSearch(data, fromIndex, size, key, maxComparator);
+      if (toIndex < size) {
+        c0 = key.compareTo(data.get(toIndex));
+        if (c0 >= -1) {
+          max = data.get(toIndex).getMax();
+          ++toIndex;
+        }
+        else {
+          max = key.getMax();
+        }
       }
     }
 
     if (toIndex - fromIndex != 1) {
       data.removeRange(fromIndex, toIndex);
-      data.add(fromIndex, new Interval<>(a, b));
+      data.add(fromIndex, new Interval<>(min, max));
     }
-    else if (data.get(fromIndex).equals(a, b)) {
+    else if (data.get(fromIndex).equals(min, max)) {
       return false;
     }
     else {
-      data.set(fromIndex, new Interval<>(a, b));
+      data.set(fromIndex, new Interval<>(min, max));
     }
 
     return true;
@@ -533,5 +544,11 @@ public class IntervalArraySet<T extends Comparable<? super T> & Serializable> im
       throw new NoSuchElementException();
 
     return data.get(size() - 1);
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  public IntervalArraySet<T> clone() {
+    return new IntervalArraySet<>((IntervalArrayIntList)data.clone());
   }
 }
