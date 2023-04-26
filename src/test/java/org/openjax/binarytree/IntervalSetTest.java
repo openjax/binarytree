@@ -42,7 +42,7 @@ abstract class IntervalSetTest {
     }
 
     @Override
-    IntervalTreeSet<Integer> clone(IntervalSet<Integer> s) {
+    IntervalTreeSet<Integer> clone(final IntervalSet<Integer> s) {
       return ((IntervalTreeSet<Integer>)s).clone();
     }
   }
@@ -162,18 +162,38 @@ abstract class IntervalSetTest {
   @SuppressWarnings("unchecked")
   public void testUnbounded() {
     final IntervalSet<Integer> s = newTree();
-    for (int i = 0; i < 1000; i += 6)
+    for (int i = 0; i < 20; i += 6)
       s.add(new Interval<>(i, i + 4));
 
     for (int i = 0, i$ = s.size(); i < i$; ++i) {
       final Object[] array = s.toArray();
       final Interval<Integer> interval = (Interval<Integer>)array[i];
       for (int v = interval.getMin(); v <= interval.getMax() + 1; ++v) {
-        final Object[] result = ArrayUtil.splice(array, 0, i);
+        Object[] result = ArrayUtil.splice(array, 0, i);
         result[0] = new Interval<>(null, Math.max(v, interval.getMax()));
 
         final IntervalSet<Integer> c = clone(s);
-        c.add(new Interval<>(null, v));
+        assertTrue(c.add(new Interval<>(null, v)));
+        assertFalse(c.add(new Interval<>(null, v)));
+        assertFalse(c.add(new Interval<>(v - 1, v)));
+        assertArrayEquals(result, c.toArray());
+
+//        if (i == 1 && v == 11)
+//          System.out.println();
+
+        final Interval<Integer> a = new Interval<>(null, c.first().getMax() + 1);
+        assertTrue(c.add(a));
+        final Interval<Integer> b;
+        if (result.length > 1 && a.getMax() == (b = (Interval<Integer>)result[1]).getMin()) {
+          result = ArrayUtil.splice(result, 0, 1);
+          result[0] = new Interval<>(null, b.getMax());
+        }
+        else {
+          result[0] = a;
+        }
+
+//        System.err.println(i + " " + v + " " + Arrays.toString(result));
+//        System.err.println(i + " " + v + " " + Arrays.toString(c.toArray()));
         assertArrayEquals(result, c.toArray());
       }
     }
@@ -182,11 +202,32 @@ abstract class IntervalSetTest {
       final Object[] array = s.toArray();
       final Interval<Integer> interval = (Interval<Integer>)array[i];
       for (int v = interval.getMax(); v >= interval.getMin() - 1; --v) {
-        final Object[] result = ArrayUtil.splice(array, i + 1);
+        Object[] result = ArrayUtil.splice(array, i + 1);
         result[result.length - 1] = new Interval<>(Math.min(interval.getMin(), v), null);
 
         final IntervalSet<Integer> c = clone(s);
-        c.add(new Interval<>(v, null));
+        assertTrue(c.add(new Interval<>(v, null)));
+        assertFalse(c.add(new Interval<>(v, null)));
+        assertFalse(c.add(new Interval<>(v, v + 1)));
+        assertArrayEquals(result, c.toArray());
+
+//        if (i == 3 && v == 22)
+//          System.out.println();
+
+//        System.err.println(i + " " + v + " " + Arrays.toString(result));
+//        System.err.println(i + " " + v + " " + Arrays.toString(c.toArray()));
+
+        final Interval<Integer> a = new Interval<>(c.last().getMin() - 1, null);
+        assertTrue(c.add(a));
+        final Interval<Integer> b;
+        if (result.length > 1 && a.getMin() == (b = (Interval<Integer>)result[result.length - 2]).getMax()) {
+          result = ArrayUtil.splice(result, result.length - 1);
+          result[result.length - 1] = new Interval<>(b.getMin(), null);
+        }
+        else {
+          result[result.length - 1] = a;
+        }
+
         assertArrayEquals(result, c.toArray());
       }
     }

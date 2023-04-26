@@ -34,7 +34,7 @@ public class IntervalArraySet<T extends Comparable<? super T> & Serializable> im
   @SuppressWarnings("rawtypes")
   private static final Comparator<Interval> minComparator = (final Interval o1, final Interval o2) -> o2.getMax() == null ? -1 : o1.getMin().compareTo(o2.getMax());
   @SuppressWarnings("rawtypes")
-  private static final Comparator<Interval> maxComparator = (final Interval o1, final Interval o2) -> o1.getMax().compareTo(o2.getMax());
+  private static final Comparator<Interval> maxComparator = (final Interval o1, final Interval o2) -> o1.getMax() == null ? o2.getMax() == null ? 0 : 1 : o2.getMax() == null ? -1 : o1.getMax().compareTo(o2.getMax());
   @SuppressWarnings("rawtypes")
   private static final Interval[] EMPTY = {};
 
