@@ -326,11 +326,15 @@ public class IntervalTreeSet<T extends Comparable<? super T> & Serializable> ext
     final T dataMin = data.getMin();
     final T dataMax = data.getMax();
 
-    if (dataMin == null)
+    if (dataMin == null) {
+      if (keyMin != null && dataMax != null && keyMin.compareTo(dataMax) > 0)
+        return node.setRight(add(key, node.getRight()));
+
       return node.setRight(mergeRight(key, node));
+    }
 
     if (keyMin == null) {
-      if (keyMax.compareTo(dataMin) < 0)
+      if (keyMax != null && keyMax.compareTo(dataMin) < 0)
         return node.setLeft(add(key, node.getLeft()));
 
       return node.setLeft(mergeLeft(key, node));
@@ -516,7 +520,7 @@ public class IntervalTreeSet<T extends Comparable<? super T> & Serializable> ext
      *  keyMin
      */
     final T childMin = childData.getMin();
-    if (keyMin == null || keyMin.compareTo(childMin) <= 0) {
+    if (keyMin == null || childMin != null && keyMin.compareTo(childMin) <= 0) {
       node.setMinNode(node); // FIXME: Is this needed?
       // Skip the child, and merge to its left
       changed = true;
@@ -623,7 +627,6 @@ public class IntervalTreeSet<T extends Comparable<? super T> & Serializable> ext
    */
   @Override
   public boolean remove(final Interval<T> key) {
-    // FIXME: Unbounded
     changed = false;
     final IntervalNode root = getRoot();
     final IntervalNode newRoot = deleteNode(key, root);
@@ -641,25 +644,15 @@ public class IntervalTreeSet<T extends Comparable<? super T> & Serializable> ext
     if (node == null)
       return null;
 
-    // First check if the range of this node's subtree overlaps with the key
-    final T nodeMax = node.getMaxNode().getData().getMax();
-    final T nodeMin;
-
-    final T keyMin = key.getMin();
-    if (keyMin.compareTo(nodeMax) > 0 || key.getMax().compareTo(nodeMin = node.getMinNode().getData().getMin()) < 0) // Does not overlap
-      return node;
-
-    if (keyMin.compareTo(nodeMin) == 1) // Overlaps on right of node
+    // Check if the range of this node's subtree intersects with the key
+    if (key.intersects(node.getMinNode().getData().getMin(), node.getMaxNode().getData().getMax()))
       return deleteNodeUnsafe(key, node);
 
-    // Overlaps node.min
+    return node;
+  }
 
-    if (key.getMax().compareTo(nodeMax) < 0) // But comes short of node.max
-      return deleteNodeUnsafe(key, node);
-
-    // Overlaps node entirely
-    changed = true;
-    return null;
+  private IntervalNode deleteNodeUnsafe2(final Interval<T> key, final IntervalNode node) {
+    return node == null ? null : deleteNodeUnsafe(key, node);
   }
 
   private IntervalNode deleteNodeUnsafe(final Interval<T> key, final IntervalNode node) {
@@ -667,43 +660,43 @@ public class IntervalTreeSet<T extends Comparable<? super T> & Serializable> ext
     final T dataMin = data.getMin();
 
     final T keyMax = key.getMax();
-    if (keyMax.compareTo(dataMin) < 0) // If key is to the left of the node, recurse left
-      return node.setLeft(deleteNode(key, node.getLeft()));
+    if (keyMax != null && dataMin != null && keyMax.compareTo(dataMin) <= 0) // If key is to the left of the node, recurse left
+      return node.setLeft(deleteNodeUnsafe2(key, node.getLeft()));
 
     final T dataMax = data.getMax();
     final T keyMin = key.getMin();
-    if (keyMin.compareTo(dataMax) > 0) // If key is to the right of the node, recurse right
-      return node.setRight(deleteNode(key, node.getRight()));
+    if (keyMin != null && dataMax != null && keyMin.compareTo(dataMax) >= 0) // If key is to the right of the node, recurse right
+      return node.setRight(deleteNodeUnsafe2(key, node.getRight()));
 
     changed = true;
 
-    if (keyMin.compareTo(dataMin) == 1) { // If key overlaps node from the right
+    if (keyMin != null && (dataMin == null || keyMin.compareTo(dataMin) == 1)) { // If key intersects node on the right of node.min
       node.setData(new Interval<>(dataMin, keyMin));
-      if (keyMax.compareTo(dataMax) < 0) // Split into two
-        return node.setRight(newNode(new Interval<>(keyMax, dataMax)).setRight(deleteNode(key, node.getRight())));
+      if (keyMax != null && (dataMax == null || keyMax.compareTo(dataMax) < 0)) // Split into two
+        return node.setRight(newNode(new Interval<>(keyMax, dataMax)).setRight(deleteNode(key, node.getRight()))); // FIXME: Don't check minNode,maxNode... just check maxNode
 
-      return node;
+      return node.setRight(deleteNode(key, node.getRight())); // FIXME: Don't check minNode,maxNode... just check maxNode
     }
 
-    // If key overlaps node from the left
+    // If key intersects node on the left of node.min
 
-    if (keyMax.compareTo(dataMax) < 0) { // If key partially overlaps node on the left
+    if (keyMax != null && (dataMax == null || keyMax.compareTo(dataMax) < 0)) { // If key partially intersects node on the left
       node.setData(new Interval<>(keyMax, dataMax));
       final IntervalNode left = node.getLeft();
       if (left != null)
-        return node.setLeft(deleteNode(key, left));
+        return node.setLeft(deleteNode(key, left)); // FIXME: Don't check minNode,maxNode... just check minNode
 
       return node;
     }
 
-    // Otherwise, key overlaps node entirely, so return its child(ren)
+    // Otherwise, key intersects node entirely, so return its child(ren)
 
     final IntervalNode right = node.getRight();
     if (right == null)
-      return deleteNode(key, node.getLeft());
+      return deleteNode(key, node.getLeft()); // FIXME: Don't check minNode,maxNode... just check minNode
 
     if (node.getLeft() == null)
-      return deleteNode(key, right);
+      return deleteNode(key, right); // FIXME: Don't check minNode,maxNode... just check maxNode
 
     final IntervalNode inOrderSuccessor = right.getMinNode();
     node.setData(inOrderSuccessor.getData());

@@ -52,10 +52,22 @@ abstract class IntervalSetTest {
   private static final int[][] y = {{0, 1, 2}, {0, 2, 1}, {1, 0, 2}, {1, 2, 0}, {2, 1, 0}, {2, 0, 1}};
 
   @SuppressWarnings("unchecked")
-  private IntervalSet<Integer> testX(final int x) {
+  private IntervalSet<Integer> testX(int x) {
     final IntervalSet<Integer> s = newTree();
     for (final int i : y[x % y.length])
-      s.add(is[i]);
+      assertTrue(s.add(is[i]));
+
+    assertEquals("[[1,3),[5,7),[9,11)]", s.toString());
+
+    x += 1;
+
+    for (final int i : y[x % y.length])
+      assertTrue(s.remove(is[i]));
+
+    assertEquals("[]", s.toString());
+
+    for (final int i : y[x % y.length])
+      assertTrue(s.add(is[i]));
 
     assertEquals("[[1,3),[5,7),[9,11)]", s.toString());
     return s;
@@ -75,10 +87,14 @@ abstract class IntervalSetTest {
     final IntervalSet<Integer> s = testX(x++);
     assertTrue(s.add(i(0, 9)));
     assertEquals("[[0,11)]", s.toString());
+    assertFalse(s.remove(i(-1, 0)));
+    assertFalse(s.remove(i(11, 12)));
 
     final IntervalSet<Integer> s0 = testX(x++);
     assertTrue(s0.add(i(1, 9)));
     assertEquals("[[1,11)]", s0.toString());
+    assertFalse(s0.remove(i(0, 1)));
+    assertFalse(s0.remove(i(11, 12)));
 
     final IntervalSet<Integer> s1 = testX(x++);
     assertTrue(s1.add(i(2, 9)));
@@ -91,6 +107,7 @@ abstract class IntervalSetTest {
     final IntervalSet<Integer> s3 = testX(x++);
     assertTrue(s3.add(i(4, 9)));
     assertEquals("[[1,3),[4,11)]", s3.toString());
+    assertFalse(s3.remove(i(3, 4)));
 
     final IntervalSet<Integer> s4 = testX(x++);
     assertTrue(s4.add(i(5, 9)));
@@ -107,8 +124,103 @@ abstract class IntervalSetTest {
     final IntervalSet<Integer> s7 = testX(x++);
     assertTrue(s7.add(i(8, 9)));
     assertEquals("[[1,3),[5,7),[8,11)]", s7.toString());
+    assertFalse(s7.remove(i(7, 8)));
 
     assertArrayEquals(new Interval[] {i(0, 1), i(3, 5), i(7, 8), i(11, 20)}, s7.difference(i(0, 20)));
+
+    assertTrue(s7.add(i(null, 6)));
+    assertEquals("[[null,7),[8,11)]", s7.toString());
+    assertFalse(s7.remove(i(7, 8)));
+
+    assertTrue(s7.add(i(9, null)));
+    assertEquals("[[null,7),[8,null)]", s7.toString());
+    assertFalse(s7.remove(i(7, 8)));
+
+    if (s instanceof IntervalArraySet) {
+      System.err.println("Not implemented");
+      return;
+    }
+
+    assertTrue(s7.remove(i(0, 2)));
+    assertEquals("[[null,0),[2,7),[8,null)]", s7.toString());
+
+    assertTrue(s7.remove(i(14, 17)));
+    assertEquals("[[null,0),[2,7),[8,14),[17,null)]", s7.toString());
+
+    assertTrue(s7.remove(i(6, 9)));
+    assertEquals("[[null,0),[2,6),[9,14),[17,null)]", s7.toString());
+
+    assertTrue(s7.remove(i(-3, 2)));
+    assertEquals("[[null,-3),[2,6),[9,14),[17,null)]", s7.toString());
+
+    assertTrue(s7.remove(i(13, 18)));
+    assertEquals("[[null,-3),[2,6),[9,13),[18,null)]", s7.toString());
+
+    assertTrue(s7.remove(i(-4, -3)));
+    assertEquals("[[null,-4),[2,6),[9,13),[18,null)]", s7.toString());
+
+    assertTrue(s7.remove(i(18, 19)));
+    assertEquals("[[null,-4),[2,6),[9,13),[19,null)]", s7.toString());
+
+    assertTrue(s7.remove(i(2, 3)));
+    assertEquals("[[null,-4),[3,6),[9,13),[19,null)]", s7.toString());
+
+    assertTrue(s7.remove(i(12, 13)));
+    assertEquals("[[null,-4),[3,6),[9,12),[19,null)]", s7.toString());
+
+    assertTrue(s7.remove(i(5, 6)));
+    assertEquals("[[null,-4),[3,5),[9,12),[19,null)]", s7.toString());
+
+    assertTrue(s7.remove(i(9, 10)));
+    assertEquals("[[null,-4),[3,5),[10,12),[19,null)]", s7.toString());
+
+    assertTrue(s7.remove(i(null, 4)));
+    assertEquals("[[4,5),[10,12),[19,null)]", s7.toString());
+
+    assertTrue(s7.add(i(null, -4)));
+    assertEquals("[[null,-4),[4,5),[10,12),[19,null)]", s7.toString());
+
+    assertTrue(s7.add(i(3, 4)));
+    assertEquals("[[null,-4),[3,5),[10,12),[19,null)]", s7.toString());
+
+    assertTrue(s7.remove(i(null, -5)));
+    assertEquals("[[-5,-4),[3,5),[10,12),[19,null)]", s7.toString());
+
+    assertTrue(s7.add(i(null, -5)));
+    assertEquals("[[null,-4),[3,5),[10,12),[19,null)]", s7.toString());
+
+    assertTrue(s7.remove(i(20, null)));
+    assertEquals("[[null,-4),[3,5),[10,12),[19,20)]", s7.toString());
+
+    assertTrue(s7.add(i(20, null)));
+    assertEquals("[[null,-4),[3,5),[10,12),[19,null)]", s7.toString());
+
+    assertTrue(s7.remove(i(null, -2)));
+    assertEquals("[[3,5),[10,12),[19,null)]", s7.toString());
+
+    assertTrue(s7.add(i(null, -4)));
+    assertEquals("[[null,-4),[3,5),[10,12),[19,null)]", s7.toString());
+
+    assertTrue(s7.remove(i(17, null)));
+    assertEquals("[[null,-4),[3,5),[10,12)]", s7.toString());
+
+    assertTrue(s7.add(i(19, null)));
+    assertEquals("[[null,-4),[3,5),[10,12),[19,null)]", s7.toString());
+
+    assertTrue(s7.remove(i(null, 4)));
+    assertEquals("[[4,5),[10,12),[19,null)]", s7.toString());
+
+    assertTrue(s7.add(i(null, -4)));
+    assertEquals("[[null,-4),[4,5),[10,12),[19,null)]", s7.toString());
+
+    assertTrue(s7.remove(i(11, null)));
+    assertEquals("[[null,-4),[4,5),[10,11)]", s7.toString());
+
+    assertTrue(s7.add(i(19, null)));
+    assertEquals("[[null,-4),[4,5),[10,11),[19,null)]", s7.toString());
+
+    assertTrue(s7.remove(i(null, null)));
+    assertEquals("[]", s7.toString());
   }
 
   @Test
