@@ -124,12 +124,28 @@ abstract class IntervalSetTest {
     final IntervalSet<Integer> s7 = testX(x++);
     assertTrue(s7.add(i(8, 9)));
     assertEquals("[[1,3),[5,7),[8,11)]", s7.toString());
+    assertFalse(s7.contains(i(0, 1)));
+    assertTrue(s7.contains(i(1, 2)));
+    assertTrue(s7.contains(i(1, 3)));
+    assertTrue(s7.contains(i(2, 3)));
+    assertFalse(s7.contains(i(3, 4)));
+    assertTrue(s7.contains(i(5, 6)));
+    assertTrue(s7.contains(i(6, 7)));
+    assertFalse(s7.contains(i(7, 8)));
+    assertTrue(s7.contains(i(8, 9)));
+    assertTrue(s7.contains(i(9, 10)));
+    assertTrue(s7.contains(i(10, 11)));
+    assertFalse(s7.contains(i(11, 12)));
     assertFalse(s7.remove(i(7, 8)));
 
     assertArrayEquals(new Interval[] {i(0, 1), i(3, 5), i(7, 8), i(11, 20)}, s7.difference(i(0, 20)));
 
     assertTrue(s7.add(i(null, 6)));
     assertEquals("[[null,7),[8,11)]", s7.toString());
+    assertFalse(s7.contains(i(7, 8)));
+    assertTrue(s7.contains(i(null, 6)));
+    assertTrue(s7.contains(i(null, 7)));
+    assertFalse(s7.contains(i(null, 8)));
     assertFalse(s7.remove(i(7, 8)));
 
     assertTrue(s7.add(i(9, null)));
@@ -143,6 +159,10 @@ abstract class IntervalSetTest {
 
     assertTrue(s7.remove(i(0, 2)));
     assertEquals("[[null,0),[2,7),[8,null)]", s7.toString());
+    assertFalse(s7.contains(i(7, 8)));
+    assertFalse(s7.contains(i(7, null)));
+    assertTrue(s7.contains(i(8, null)));
+    assertTrue(s7.contains(i(9, null)));
 
     assertTrue(s7.remove(i(14, 17)));
     assertEquals("[[null,0),[2,7),[8,14),[17,null)]", s7.toString());
