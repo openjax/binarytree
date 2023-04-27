@@ -627,9 +627,12 @@ public class IntervalTreeSet<T extends Comparable<? super T> & Serializable> ext
    */
   @Override
   public boolean remove(final Interval<T> key) {
-    changed = false;
     final IntervalNode root = getRoot();
-    final IntervalNode newRoot = deleteNode(key, root);
+    if (root == null || !key.intersects(root.getMinNode().getData().getMin(), root.getMaxNode().getData().getMax()))
+      return false;
+
+    changed = false;
+    final IntervalNode newRoot = deleteNodeUnsafe(key, root);
     if (newRoot != root) {
       if (newRoot != null)
         newRoot.setParent(null);
@@ -640,19 +643,23 @@ public class IntervalTreeSet<T extends Comparable<? super T> & Serializable> ext
     return changed;
   }
 
-  private IntervalNode deleteNode(final Interval<T> key, final IntervalNode node) {
-    if (node == null)
-      return null;
+  private IntervalNode deleteNodeLeft(final Interval<T> key, final IntervalNode node) {
+    final IntervalNode left = node.getLeft();
+    final T keyMin = key.getMin();
+    if (left == null || keyMin != null && keyMin.compareTo(left.getMaxNode().getData().getMax()) > 0)
+      return node;
 
-    // Check if the range of this node's subtree intersects with the key
-    if (key.intersects(node.getMinNode().getData().getMin(), node.getMaxNode().getData().getMax()))
-      return deleteNodeUnsafe(key, node);
-
-    return node;
+    return node.setLeft(deleteNodeUnsafe(key, left));
   }
 
-  private IntervalNode deleteNodeUnsafe2(final Interval<T> key, final IntervalNode node) {
-    return node == null ? null : deleteNodeUnsafe(key, node);
+  private IntervalNode deleteNodeRight(final Interval<T> key, final IntervalNode node) {
+    final IntervalNode right = node.getRight();
+    final T keyMax = key.getMax();
+    final T treeMin = node.getMinNode().getData().getMin();
+    if (right == null || keyMax != null && treeMin != null && keyMax.compareTo(treeMin) < 0)
+      return node;
+
+    return node.setRight(deleteNodeUnsafe(key, right));
   }
 
   private IntervalNode deleteNodeUnsafe(final Interval<T> key, final IntervalNode node) {
@@ -661,21 +668,21 @@ public class IntervalTreeSet<T extends Comparable<? super T> & Serializable> ext
 
     final T keyMax = key.getMax();
     if (keyMax != null && dataMin != null && keyMax.compareTo(dataMin) <= 0) // If key is to the left of the node, recurse left
-      return node.setLeft(deleteNodeUnsafe2(key, node.getLeft()));
+      return deleteNodeLeft(key, node);
 
     final T dataMax = data.getMax();
     final T keyMin = key.getMin();
     if (keyMin != null && dataMax != null && keyMin.compareTo(dataMax) >= 0) // If key is to the right of the node, recurse right
-      return node.setRight(deleteNodeUnsafe2(key, node.getRight()));
+      return deleteNodeRight(key, node);
 
     changed = true;
 
     if (keyMin != null && (dataMin == null || keyMin.compareTo(dataMin) == 1)) { // If key intersects node on the right of node.min
       node.setData(new Interval<>(dataMin, keyMin));
       if (keyMax != null && (dataMax == null || keyMax.compareTo(dataMax) < 0)) // Split into two
-        return node.setRight(newNode(new Interval<>(keyMax, dataMax)).setRight(deleteNode(key, node.getRight()))); // FIXME: Don't check minNode,maxNode... just check maxNode. {@link #deleteNode(Interval,IntervalNode)} needs to be removed
+        return node.setRight(deleteNodeRight(key, newNode(new Interval<>(keyMax, dataMax)).setRight(node.getRight())));
 
-      return node.setRight(deleteNode(key, node.getRight())); // FIXME: Don't check minNode,maxNode... just check maxNode
+      return deleteNodeRight(key, node);
     }
 
     // If key intersects node on the left of node.min
@@ -684,7 +691,7 @@ public class IntervalTreeSet<T extends Comparable<? super T> & Serializable> ext
       node.setData(new Interval<>(keyMax, dataMax));
       final IntervalNode left = node.getLeft();
       if (left != null)
-        return node.setLeft(deleteNode(key, left)); // FIXME: Don't check minNode,maxNode... just check minNode. {@link #deleteNode(Interval,IntervalNode)} needs to be removed
+        return deleteNodeLeft(key, node);
 
       return node;
     }
@@ -693,16 +700,17 @@ public class IntervalTreeSet<T extends Comparable<? super T> & Serializable> ext
 
     final IntervalNode right = node.getRight();
     if (right == null)
-      return deleteNode(key, node.getLeft()); // FIXME: Don't check minNode,maxNode... just check minNode. {@link #deleteNode(Interval,IntervalNode)} needs to be removed
+      return node.getLeft() == null ? null : deleteNodeUnsafe(key, node.getLeft());
 
     if (node.getLeft() == null)
-      return deleteNode(key, right); // FIXME: Don't check minNode,maxNode... just check maxNode. {@link #deleteNode(Interval,IntervalNode)} needs to be removed
+      return deleteNodeUnsafe(key, right);
 
     final IntervalNode inOrderSuccessor = right.getMinNode();
-    node.setData(inOrderSuccessor.getData());
+    final Interval<T> inOrderSuccessorData = inOrderSuccessor.getData();
+    node.setData(inOrderSuccessorData);
 
     // Recurse back onto node, because the data was replaced by successor's (the right bound of which has not yet been checked)
-    return deleteNodeUnsafe(key, node.setRight(deleteNode(inOrderSuccessor.getData(), right)));
+    return deleteNodeUnsafe(key, node.setRight(deleteNodeUnsafe(inOrderSuccessorData, right)));
   }
 
   /**
@@ -714,24 +722,47 @@ public class IntervalTreeSet<T extends Comparable<? super T> & Serializable> ext
   @Override
   @SuppressWarnings("unchecked")
   public Interval<T>[] difference(final Interval<T> key) {
-    // FIXME: Unbounded
     final T keyMin = key.getMin();
     final T keyMax = key.getMax();
 
     Interval<T> data;
+    T dataMin;
+    T dataMax;
     Node minNode = null;
-    for (Node node = getRoot(); node != null;) { // [X]
+
+    final IntervalNode root = getRoot();
+    if (keyMin == null) {
+      if (root == null)
+        return new Interval[] {key};
+
+      minNode = root.getMinNode();
+      data = minNode.getData();
+      dataMax = data.getMax();
+      if (keyMax != null && (dataMax == null || keyMax.compareTo(dataMax) <= 0))
+        return emptyIntervals;
+
+      dataMin = data.getMin();
+      if (dataMin == null)
+        return difference(minNode, key, dataMax, keyMax, 0);
+
+      final Interval<T>[] diff = difference(minNode, key, dataMax, keyMax, 1);
+      diff[0] = new Interval<>(keyMin, dataMin);
+      return diff;
+    }
+
+    for (Node node = root; node != null;) { // [X]
       data = node.getData();
-      if (keyMin.compareTo(data.getMin()) < 0) {
+      dataMin = data.getMin();
+      if (dataMin != null && keyMin.compareTo(dataMin) < 0) {
         minNode = node;
         node = node.getLeft();
       }
       else {
-        final T dataMax = data.getMax();
+        dataMax = data.getMax();
         if (keyMin.compareTo(dataMax) > 0)
           node = node.getRight();
         else
-          return keyMax.compareTo(dataMax) > 0 ? difference(node, key, dataMax, keyMax, 0) : emptyIntervals;
+          return keyMax == null || keyMax.compareTo(dataMax) > 0 ? difference(node, key, dataMax, keyMax, 0) : emptyIntervals;
       }
     }
 
@@ -739,14 +770,14 @@ public class IntervalTreeSet<T extends Comparable<? super T> & Serializable> ext
       return new Interval[] {key};
 
     data = minNode.getData();
-    final T dataMax = data.getMax();
-    final Interval<T>[] diff = keyMax.compareTo(dataMax) > 0 ? difference(minNode, key, dataMax, keyMax, 1) : new Interval[1];
+    dataMax = data.getMax();
+    final Interval<T>[] diff = dataMax != null && (keyMax == null || keyMax.compareTo(dataMax) > 0) ? difference(minNode, key, dataMax, keyMax, 1) : new Interval[1];
     diff[0] = new Interval<>(keyMin, data.getMin());
     return diff;
   }
 
   @SuppressWarnings("unchecked")
-  private Interval<T>[] difference(final Interval<T> key, final T min, final T max, final int depth) {
+  private Interval<T>[] newDiffArray(final T min, final T max, final int depth) {
     final Interval<T>[] diff = new Interval[depth + 1];
     diff[depth] = new Interval<>(min, max);
     return diff;
@@ -765,16 +796,16 @@ public class IntervalTreeSet<T extends Comparable<? super T> & Serializable> ext
 
       node = next;
       if (node == null)
-        return difference(key, min, max, depth);
+        return newDiffArray(min, max, depth);
     }
 
     final Interval<T> data = node.getData();
     final T dataMin = data.getMin();
-    if (max.compareTo(dataMin) < 0)
-      return difference(key, min, max, depth);
+    if (max != null && max.compareTo(dataMin) < 0)
+      return newDiffArray(min, max, depth);
 
     final T dataMax = data.getMax();
-    final Interval<T>[] diff = max.compareTo(dataMax) > 0 ? difference(node, key, dataMax, max, depth + 1) : new Interval[depth + 1];
+    final Interval<T>[] diff = dataMax != null && (max == null || max.compareTo(dataMax) > 0) ? difference(node, key, dataMax, max, depth + 1) : new Interval[depth + 1];
     diff[depth] = new Interval<>(min, dataMin);
     return diff;
   }
@@ -794,6 +825,7 @@ public class IntervalTreeSet<T extends Comparable<? super T> & Serializable> ext
     if (node == null)
       return false;
 
+    // FIXME: Use or not use <treeMin,treeMax>?
     final Interval<T> data = node.getData();
     return key.compareTo(data.getMin()) < 0 ? contains(key, node.getLeft()) : key.compareTo(data.getMax()) > 0 ? contains(key, node.getRight()) : true;
   }
@@ -822,15 +854,15 @@ public class IntervalTreeSet<T extends Comparable<? super T> & Serializable> ext
       return null;
 
     final T keyMin = key.getMin();
-    final T nodeMin = root.getMinNode().getData().getMin();
-    final T nodeMax = root.getMaxNode().getData().getMax();
+    final T treeMin = root.getMinNode().getData().getMin();
+    final T treeMax = root.getMaxNode().getData().getMax();
 
     if (keyMin == null) {
       final IntervalNode minNode = root.getMinNode();
       return minNode.getData().getMin() == null ? minNode : null;
     }
 
-    if (nodeMin != null && keyMin.compareTo(nodeMin) < 0 && nodeMax != null && keyMin.compareTo(nodeMax) > 0)
+    if (treeMin != null && keyMin.compareTo(treeMin) < 0 || treeMax != null && keyMin.compareTo(treeMax) >= 0)
       return null;
 
     return searchNode(keyMin, root);
@@ -848,7 +880,7 @@ public class IntervalTreeSet<T extends Comparable<? super T> & Serializable> ext
     final Interval<T> data = node.getData();
     final T dataMin = data.getMin();
     final T dataMax;
-    return dataMin != null && keyMin.compareTo(dataMin) < 0 ? searchNodeLeft(keyMin, node.getLeft()) : (dataMax = data.getMax()) != null && keyMin.compareTo(dataMax) > 0 ? searchNodeRight(keyMin, node.getRight()) : node;
+    return dataMin != null && keyMin.compareTo(dataMin) < 0 ? searchNodeLeft(keyMin, node.getLeft()) : (dataMax = data.getMax()) != null && keyMin.compareTo(dataMax) >= 0 ? searchNodeRight(keyMin, node.getRight()) : node;
   }
 
   /**
@@ -859,23 +891,46 @@ public class IntervalTreeSet<T extends Comparable<? super T> & Serializable> ext
    */
   @Override
   public boolean intersects(final Interval<T> key) {
-    // FIXME: Unbounded
-    return intersects(key, getRoot());
+    final IntervalNode root = getRoot();
+    if (root == null)
+      return false;
+
+    final T keyMin = key.getMin();
+    final T keyMax = key.getMax();
+    if (keyMin == null) {
+      if (keyMax == null)
+        return true;
+
+      final T treeMin = root.getMinNode().getData().getMin();
+      return treeMin == null || keyMax.compareTo(treeMin) > 0;
+    }
+
+    if (keyMax == null) {
+      final T treeMax = root.getMaxNode().getData().getMax();
+      return treeMax == null || keyMin.compareTo(treeMax) < 0;
+    }
+
+    final T treeMin = root.getMinNode().getData().getMin();
+    final T treeMax;
+    if (treeMin != null && keyMax.compareTo(treeMin) <= 0 || (treeMax = root.getMaxNode().getData().getMax()) != null && keyMin.compareTo(treeMax) >= 0)
+      return false;
+
+    return intersects(key, root);
+  }
+
+  private boolean intersectsLeft(final Interval<T> key, final IntervalNode node) {
+    return node != null && key.getMin().compareTo(node.getMaxNode().getData().getMax()) <= 0 && intersects(key, node);
+  }
+
+  private boolean intersectsRight(final Interval<T> key, final IntervalNode node) {
+    return node != null && key.getMax().compareTo(node.getMinNode().getData().getMin()) >= 0 && intersects(key, node);
   }
 
   private boolean intersects(final Interval<T> key, final IntervalNode node) {
-    if (node == null)
-      return false;
-
-    final T keyMax = key.getMax();
-    final T keyMin;
-    if (keyMax.compareTo(node.getMinNode().getData().getMin()) < 0 || (keyMin = key.getMin()).compareTo(node.getMaxNode().getData().getMax()) > 0)
-      return false;
-
     final Interval<T> data = node.getData();
     final T dataMin = data.getMin();
-    final T dataMax = data.getMax();
-    return keyMax.compareTo(dataMin) <= 0 ? intersects(key, node.getLeft()) : keyMin.compareTo(dataMax) >= 0 ? intersects(key, node.getRight()) : key.intersects(data);
+    final T dataMax;
+    return dataMin != null && key.getMax().compareTo(dataMin) <= 0 ? intersectsLeft(key, node.getLeft()) : (dataMax = data.getMax()) != null && key.getMin().compareTo(dataMax) >= 0 ? intersectsRight(key, node.getRight()) : key.intersects(data);
   }
 
   @Override

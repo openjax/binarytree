@@ -80,6 +80,22 @@ abstract class IntervalSetTest {
   abstract IntervalSet<Integer> newTree();
   abstract IntervalSet<Integer> clone(IntervalSet<Integer> s);
 
+  private static void assertContainsIntersects(final boolean contains, final boolean intersects, final IntervalSet<Integer> s, final Interval<Integer> i) {
+    assertEquals(contains, s.contains(i));
+    assertEquals(intersects, s.intersects(i));
+  }
+
+  @SafeVarargs
+  private static void assertDifference(final Interval<Integer> i, final IntervalSet<Integer> s, final Interval<Integer> ... expected) {
+    final Interval<Integer>[] actual = s.difference(i);
+    assertArrayEquals(expected, actual);
+  }
+
+  private static void assertDifferenceEcho(final Interval<Integer> i, final IntervalSet<Integer> s) {
+    final Interval<Integer>[] actual = s.difference(i);
+    assertArrayEquals(new Interval[] {i}, actual);
+  }
+
   @Test
   public void testXL() {
     int x = 0;
@@ -124,28 +140,31 @@ abstract class IntervalSetTest {
     final IntervalSet<Integer> s7 = testX(x++);
     assertTrue(s7.add(i(8, 9)));
     assertEquals("[[1,3),[5,7),[8,11)]", s7.toString());
-    assertFalse(s7.contains(i(0, 1)));
-    assertTrue(s7.contains(i(1, 2)));
-    assertTrue(s7.contains(i(1, 3)));
-    assertTrue(s7.contains(i(2, 3)));
-    assertFalse(s7.contains(i(3, 4)));
-    assertTrue(s7.contains(i(5, 6)));
-    assertTrue(s7.contains(i(6, 7)));
-    assertFalse(s7.contains(i(7, 8)));
-    assertTrue(s7.contains(i(8, 9)));
-    assertTrue(s7.contains(i(9, 10)));
-    assertTrue(s7.contains(i(10, 11)));
-    assertFalse(s7.contains(i(11, 12)));
+    assertContainsIntersects(false, false, s7, i(0, 1));
+    assertContainsIntersects(true, true, s7, i(1, 2));
+    assertContainsIntersects(true, true, s7, i(1, 3));
+    assertContainsIntersects(true, true, s7, i(2, 3));
+    assertContainsIntersects(false, false, s7, i(3, 4));
+    assertContainsIntersects(true, true, s7, i(5, 6));
+    assertContainsIntersects(true, true, s7, i(6, 7));
+    assertContainsIntersects(false, false, s7, i(7, 8));
+    assertContainsIntersects(true, true, s7, i(8, 9));
+    assertContainsIntersects(true, true, s7, i(9, 10));
+    assertContainsIntersects(true, true, s7, i(10, 11));
+    assertContainsIntersects(false, false, s7, i(11, 12));
     assertFalse(s7.remove(i(7, 8)));
 
-    assertArrayEquals(new Interval[] {i(0, 1), i(3, 5), i(7, 8), i(11, 20)}, s7.difference(i(0, 20)));
+    assertDifference(i(0, 20), s7, i(0, 1), i(3, 5), i(7, 8), i(11, 20));
+    assertDifference(i(null, 20), s7, i(null, 1), i(3, 5), i(7, 8), i(11, 20));
+    assertDifference(i(0, null), s7, i(0, 1), i(3, 5), i(7, 8), i(11, null));
+    assertDifference(i(null, null), s7, i(null, 1), i(3, 5), i(7, 8), i(11, null));
 
     assertTrue(s7.add(i(null, 6)));
     assertEquals("[[null,7),[8,11)]", s7.toString());
-    assertFalse(s7.contains(i(7, 8)));
-    assertTrue(s7.contains(i(null, 6)));
-    assertTrue(s7.contains(i(null, 7)));
-    assertFalse(s7.contains(i(null, 8)));
+    assertContainsIntersects(false, false, s7, i(7, 8));
+    assertContainsIntersects(true, true, s7, i(null, 6));
+    assertContainsIntersects(true, true, s7, i(null, 7));
+    assertContainsIntersects(false, true, s7, i(null, 8));
     assertFalse(s7.remove(i(7, 8)));
 
     assertTrue(s7.add(i(9, null)));
@@ -159,10 +178,10 @@ abstract class IntervalSetTest {
 
     assertTrue(s7.remove(i(0, 2)));
     assertEquals("[[null,0),[2,7),[8,null)]", s7.toString());
-    assertFalse(s7.contains(i(7, 8)));
-    assertFalse(s7.contains(i(7, null)));
-    assertTrue(s7.contains(i(8, null)));
-    assertTrue(s7.contains(i(9, null)));
+    assertContainsIntersects(false, false, s7, i(7, 8));
+    assertContainsIntersects(false, true, s7, i(7, null));
+    assertContainsIntersects(true, true, s7, i(8, null));
+    assertContainsIntersects(true, true, s7, i(9, null));
 
     assertTrue(s7.remove(i(14, 17)));
     assertEquals("[[null,0),[2,7),[8,14),[17,null)]", s7.toString());
@@ -238,9 +257,30 @@ abstract class IntervalSetTest {
 
     assertTrue(s7.add(i(19, null)));
     assertEquals("[[null,-4),[4,5),[10,11),[19,null)]", s7.toString());
+    assertContainsIntersects(false, true, s7, i(null, null));
+    assertContainsIntersects(false, true, s7, i(null, 0));
+    assertContainsIntersects(false, true, s7, i(0, null));
+
+    assertDifference(i(-10, 30), s7, i(-4, 4), i(5, 10), i(11, 19));
+    assertDifference(i(-10, null), s7, i(-4, 4), i(5, 10), i(11, 19));
+    assertDifference(i(null, 30), s7, i(-4, 4), i(5, 10), i(11, 19));
+    assertDifference(i(null, null), s7, i(-4, 4), i(5, 10), i(11, 19));
 
     assertTrue(s7.remove(i(null, null)));
     assertEquals("[]", s7.toString());
+
+    assertFalse(s7.remove(i(0, 1)));
+    assertFalse(s7.remove(i(0, null)));
+    assertFalse(s7.remove(i(null, 1)));
+    assertFalse(s7.remove(i(null, null)));
+    assertDifferenceEcho(i(0, 1), s7);
+    assertDifferenceEcho(i(0, null), s7);
+    assertDifferenceEcho(i(null, 1), s7);
+    assertDifferenceEcho(i(null, null), s7);
+    assertContainsIntersects(false, false, s7, i(0, 1));
+    assertContainsIntersects(false, false, s7, i(0, null));
+    assertContainsIntersects(false, false, s7, i(null, 1));
+    assertContainsIntersects(false, false, s7, i(null, null));
   }
 
   @Test
@@ -283,11 +323,11 @@ abstract class IntervalSetTest {
     assertTrue(s7.add(i(3, 4)));
     assertEquals("[[1,4),[5,7),[9,11)]", s7.toString());
 
-    assertArrayEquals(new Interval[] {i(4, 5), i(7, 9)}, s7.difference(i(1, 9)));
-    assertArrayEquals(new Interval[] {i(4, 5), i(7, 9)}, s7.difference(i(2, 10)));
-    assertArrayEquals(new Interval[] {i(4, 5)}, s7.difference(i(2, 6)));
-    assertArrayEquals(new Interval[] {i(7, 9)}, s7.difference(i(6, 10)));
-    assertArrayEquals(new Interval[] {i(7, 9), i(11, 15)}, s7.difference(i(6, 15)));
+    assertDifference(i(1, 9), s7, i(4, 5), i(7, 9));
+    assertDifference(i(2, 10), s7, i(4, 5), i(7, 9));
+    assertDifference(i(2, 6), s7, i(4, 5));
+    assertDifference(i(6, 10), s7, i(7, 9));
+    assertDifference(i(6, 15), s7, i(7, 9), i(11, 15));
   }
 
   @Test
