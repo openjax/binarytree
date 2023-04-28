@@ -56,7 +56,11 @@ public class IntervalTreeSetTest extends BinarySearchTreeTest<IntervalTreeSet<In
     assertTrue(tree.contains(key), onError);
     assertTrue(tree.contains(keyMin), onError);
     assertTrue(tree.contains(keyMin + (keyMax - keyMin) / 2), onError);
-    assertTrue(tree.contains(keyMax), onError);
+    if (keyMax.equals(tree.last().getMax()))
+      assertFalse(tree.contains(keyMax), onError);
+    else
+      assertTrue(tree.contains(keyMax - 1), onError);
+
     return node;
   }
 
