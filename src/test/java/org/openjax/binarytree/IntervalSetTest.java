@@ -345,13 +345,13 @@ abstract class IntervalSetTest {
       return;
     }
 
-    for (int i = 0; i < 20; i += 6)
+    for (int i = 0; i < 20; i += 6) // [N]
       s.add(new Interval<>(i, i + 4));
 
-    for (int i = 0, i$ = s.size(); i < i$; ++i) {
+    for (int i = 0, i$ = s.size(); i < i$; ++i) { // [A]
       final Object[] array = s.toArray();
       final Interval<Integer> interval = (Interval<Integer>)array[i];
-      for (int v = interval.getMin(); v <= interval.getMax() + 1; ++v) {
+      for (int v = interval.getMin(); v <= interval.getMax() + 1; ++v) { // [N]
         Object[] result = ArrayUtil.splice(array, 0, i);
         result[0] = new Interval<>(null, Math.max(v, interval.getMax()));
 
@@ -381,10 +381,10 @@ abstract class IntervalSetTest {
       }
     }
 
-    for (int i = s.size() - 1; i >= 0; --i) {
+    for (int i = s.size() - 1; i >= 0; --i) { // [A]
       final Object[] array = s.toArray();
       final Interval<Integer> interval = (Interval<Integer>)array[i];
-      for (int v = interval.getMax(); v >= interval.getMin() - 1; --v) {
+      for (int v = interval.getMax(); v >= interval.getMin() - 1; --v) { // [N]
         Object[] result = ArrayUtil.splice(array, i + 1);
         result[result.length - 1] = new Interval<>(Math.min(interval.getMin(), v), null);
 
@@ -540,7 +540,7 @@ abstract class IntervalSetTest {
     assertTrue(s.add(i(1, 8)));
     assertEquals("[[1,10),[12,16),[17,18)]", s.toString());
 
-    for (int i = 1; i < 10; ++i) {
+    for (int i = 1; i < 10; ++i) { // [N]
       assertFalse(s.add(i(i, ++i)));
       assertEquals("[[1,10),[12,16),[17,18)]", s.toString());
     }

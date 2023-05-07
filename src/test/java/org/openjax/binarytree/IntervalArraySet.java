@@ -16,7 +16,6 @@
 
 package org.openjax.binarytree;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -30,11 +29,11 @@ import java.util.SortedSet;
 import org.libj.util.CollectionUtil;
 import org.libj.util.Interval;
 
-public class IntervalArraySet<T extends Comparable<? super T> & Serializable> implements Cloneable, IntervalSet<T> {
-  @SuppressWarnings("rawtypes")
-  private static final Comparator<Interval> minComparator = (final Interval o1, final Interval o2) -> o2.getMax() == null ? -1 : o1.getMin().compareTo(o2.getMax());
-  @SuppressWarnings("rawtypes")
-  private static final Comparator<Interval> maxComparator = (final Interval o1, final Interval o2) -> o1.getMax() == null ? o2.getMax() == null ? 0 : 1 : o2.getMax() == null ? -1 : o1.getMax().compareTo(o2.getMax());
+public class IntervalArraySet<T> implements IntervalSet<T>, Cloneable {
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  private static final Comparator<Interval> minComparator = (final Interval o1, final Interval o2) -> o2.getMax() == null ? -1 : o1.compare(o1.getMin(), o2.getMax());
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  private static final Comparator<Interval> maxComparator = (final Interval o1, final Interval o2) -> o1.getMax() == null ? o2.getMax() == null ? 0 : 1 : o2.getMax() == null ? -1 : o1.compare(o1.getMax(), o2.getMax());
   @SuppressWarnings("rawtypes")
   private static final Interval[] EMPTY = {};
 
@@ -131,7 +130,7 @@ public class IntervalArraySet<T extends Comparable<? super T> & Serializable> im
       fromIndex = CollectionUtil.binaryClosestSearch(data, 0, size, key, minComparator);
       if (fromIndex == size) {
         final Interval<T> f = data.get(--fromIndex);
-        if (keyMin.compareTo(f.getMax()) > 0)
+        if (key.compare(keyMin, f.getMax()) > 0)
           return data.add(key);
       }
     }
@@ -181,12 +180,6 @@ public class IntervalArraySet<T extends Comparable<? super T> & Serializable> im
     return true;
   }
 
-  /**
-   * Returns {@code true} if the provided {@code key} overlaps with keys in this {@link IntervalArraySet}, otherwise {@code false}.
-   *
-   * @param key The {@link Interval} to check for overlap.
-   * @return {@code true} if the provided {@code key} overlaps with keys in this {@link IntervalArraySet}, otherwise {@code false}.
-   */
   @Override
   public boolean intersects(final Interval<T> key) {
     final int size = data.size();
@@ -205,14 +198,11 @@ public class IntervalArraySet<T extends Comparable<? super T> & Serializable> im
     return false;
   }
 
-  /**
-   * Returns an array of {@link Interval}s not present in this {@link IntervalArraySet} within the provided {@code key}
-   * {@link Interval}.
-   *
-   * @param key The {@link Interval} to evaluate for difference.
-   * @return An array of {@link Interval}s not present in this {@link IntervalArraySet} within the provided {@code key}
-   *         {@link Interval}.
-   */
+  @Override
+  public Interval<T>[] difference(final T keyMin, final T keyMax) {
+    return difference(new Interval<>(keyMin, keyMax));
+  }
+
   @Override
   @SuppressWarnings("unchecked")
   public Interval<T>[] difference(final Interval<T> key) {
@@ -225,7 +215,7 @@ public class IntervalArraySet<T extends Comparable<? super T> & Serializable> im
     final Interval<T> from = data.get(fromIndex);
     final T keyMax = key.getMax();
     final T fromMin = from.getMin();
-    if (fromIndex >= size || fromMin.compareTo(keyMax) >= 0)
+    if (fromIndex >= size || key.compare(fromMin, keyMax) >= 0)
       return EMPTY;
 
     int toIndex = CollectionUtil.binaryClosestSearch(data, fromIndex, size, key, maxComparator);
@@ -235,41 +225,41 @@ public class IntervalArraySet<T extends Comparable<? super T> & Serializable> im
     final Interval<T> to = data.get(toIndex);
     final T keyMin = key.getMin();
     final T toMax = to.getMax();
-    if (toMax.compareTo(keyMin) < 0)
+    if (key.compare(toMax, keyMin) < 0)
       return EMPTY;
 
-    if (keyMax.compareTo(fromMin) <= 0 || keyMin.compareTo(toMax) >= 0)
+    if (key.compare(keyMax, fromMin) <= 0 || key.compare(keyMin, toMax) >= 0)
       return new Interval[] {key};
 
     final Interval<T>[] diff;
-    if (keyMin.compareTo(fromMin) < 0) {
-      if (keyMax.compareTo(toMax) >= 0) {
+    if (key.compare(keyMin, fromMin) < 0) {
+      if (key.compare(keyMax, toMax) >= 0) {
         diff = getGaps(fromIndex, toIndex, true, true);
         diff[0] = new Interval<>(keyMin, fromMin);
         diff[diff.length - 1] = new Interval<>(toMax, keyMax);
       }
       else {
         diff = getGaps(fromIndex, toIndex, true, false);
-        if (keyMax.compareTo(toMax) <= 0 && diff.length > 1) {
+        if (key.compare(keyMax, toMax) <= 0 && diff.length > 1) {
           final int len1 = diff.length - 1;
           final Interval<T> last = diff[len1];
-          if (last.getMax().compareTo(keyMax) > 0)
+          if (key.compare(last.getMax(), keyMax) > 0)
             diff[len1] = new Interval<>(last.getMin(), keyMax);
         }
 
         diff[0] = new Interval<>(keyMin, fromMin);
       }
     }
-    else if (keyMax.compareTo(toMax) >= 0) {
+    else if (key.compare(keyMax, toMax) >= 0) {
       diff = getGaps(fromIndex, toIndex, false, true);
       diff[diff.length - 1] = new Interval<>(toMax, keyMax);
     }
     else {
       diff = getGaps(fromIndex, toIndex, false, false);
-      if (keyMax.compareTo(toMax) <= 0 && diff.length > 0) {
+      if (key.compare(keyMax, toMax) <= 0 && diff.length > 0) {
         final int len1 = diff.length - 1;
         final Interval<T> last = diff[len1];
-        if (last.getMax().compareTo(keyMax) > 0)
+        if (key.compare(last.getMax(), keyMax) > 0)
           diff[len1] = new Interval<>(last.getMin(), keyMax);
       }
     }
@@ -345,18 +335,17 @@ public class IntervalArraySet<T extends Comparable<? super T> & Serializable> im
   @Override
   @SuppressWarnings("unchecked")
   public boolean contains(final Object o) {
-    return contains((Interval<T>)o);
-  }
+    if (o instanceof Interval)
+      return contains((Interval<T>)o);
 
-  @Override
-  public boolean contains(final T key) {
+    final T key = (T)o;
     final int size = size();
-    int index = CollectionUtil.binaryClosestSearch(data, 0, size, key, i -> i.getMin());
-    if (index == size)
+    int index;
+    if (size == 0 || size == (index = CollectionUtil.binaryClosestSearch(data, 0, size, key, i -> i.getMin(), data.get(0).comparator())))
       return false;
 
     Interval<T> i = data.get(index);
-    if (key.compareTo(i.getMin()) < 0) {
+    if (i.compare(key, i.getMin()) < 0) {
       if (++index == size)
         return false;
 
@@ -374,7 +363,7 @@ public class IntervalArraySet<T extends Comparable<? super T> & Serializable> im
       return false;
 
     Interval<T> i = data.get(index);
-    if (key.getMin().compareTo(i.getMin()) < 0) {
+    if (key.compare(key.getMin(), i.getMin()) < 0) {
       if (++index == size)
         return false;
 

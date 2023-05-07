@@ -34,7 +34,7 @@ import org.libj.util.CombinationIterator;
 import org.libj.util.Interval;
 import org.libj.util.PermutationIterator;
 
-public class IntervalTreeSetTest extends BinarySearchTreeTest<IntervalTreeSet<Integer>,Interval<Integer>> {
+public class IntervalTreeSetRTest extends BinarySearchTreeTest<IntervalTreeSet<Integer>,Interval<Integer>> {
   private static final Interval<Integer> MIN_VALUE = new Interval<>(Integer.MIN_VALUE, Integer.MIN_VALUE + 1);
   private static final Interval<Integer> MAX_VALUE = new Interval<>(Integer.MAX_VALUE - 1, Integer.MAX_VALUE);
 
