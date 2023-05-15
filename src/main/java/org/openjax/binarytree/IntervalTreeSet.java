@@ -535,12 +535,12 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
       if (updateMax) {
         node.superSetRight(mergeRight(key, keyMax, keyMin, node, node.getRight()));
 //        if (nodeData == node.getData()) { // Seems to not be needed, because it's guaranteed that `mergeRight` will call `node.setData()`.
-//          node.setData(new Interval<>(keyMin, nodeMax));
+//          node.setData(key.newInstance(keyMin, nodeMax));
 //          changed = true;
 //        }
       }
       else {
-        node.setData(new Interval<>(keyMin, nodeMax));
+        node.setData(key.newInstance(keyMin, nodeMax));
         changed = true;
       }
 
@@ -588,12 +588,12 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
       final boolean updateMin = childMin == null || key.compare(childMin, data.getMin()) < 0;
       node.superSetRight(mergeRight(key, keyMax, updateMin ? childMin : keyMin, node, node.getRight()));
 //      if (nodeData == node.getData() && updateMin) { // Seems to not be needed, because it's guaranteed that `mergeRight` will call `node.setData()`.
-//        node.setData(new Interval<>(childMin, nodeMax));
+//        node.setData(key.newInstance(childMin, nodeMax));
 //        changed = true;
 //      }
     }
     else { /* if (key.compare(childMin, nodeData.getMin()) < 0) { */ // Not needed, because mergeLeft is called for c = -1, which guarantees this exact condition.
-      node.setData(new Interval<>(childMin, dataMax));
+      node.setData(key.newInstance(childMin, dataMax));
       changed = true;
     }
 
@@ -611,7 +611,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
     if (child == null) {
       final T dataMax = node.getData().getMax();
       if (dataMax != null && (keyMax == null || key.compare(keyMax, dataMax) > 0)) {
-        node.setData(new Interval<>(dataMin, keyMax));
+        node.setData(key.newInstance(dataMin, keyMax));
         changed = true;
       }
 
@@ -651,7 +651,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
     keyMax = data.getMax();
 
     { /* if (key.compare(keyMax, data.getMax()) > 0) { */ // Not needed, because mergeRight is called for c = 1, which guarantees this exact condition.
-      node.setData(new Interval<>(dataMin, keyMax));
+      node.setData(key.newInstance(dataMin, keyMax));
       changed = true;
     }
 
@@ -714,9 +714,9 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
 
       if (dataMin == null || key.compare(keyMin, dataMin) > 0) { // If key intersects node on the right of node.min
         changed = true;
-        node.setData(new Interval<>(dataMin, keyMin));
+        node.setData(key.newInstance(dataMin, keyMin));
         if (keyMax != null && (dataMax == null || key.compare(keyMax, dataMax) < 0)) // Split into two
-          return node.setRight(deleteNodeRight(key, newNode(new Interval<>(keyMax, dataMax)).setRight(node.getRight())));
+          return node.setRight(deleteNodeRight(key, newNode(key.newInstance(keyMax, dataMax)).setRight(node.getRight())));
 
         return deleteNodeRight(key, node);
       }
@@ -730,7 +730,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
 
       if (dataMax == null || key.compare(keyMax, dataMax) < 0) { // If key partially intersects node on the left
         changed = true;
-        node.setData(new Interval<>(keyMax, dataMax));
+        node.setData(key.newInstance(keyMax, dataMax));
         return deleteNodeLeft(key, node);
       }
     }
@@ -765,17 +765,6 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
     return difference(key, key.getMin(), key.getMax());
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @throws NullPointerException If the provided {@link Interval} is null.
-   * @complexity O(log(n))
-   */
-  @Override
-  public Interval<T>[] difference(final T keyMin, final T keyMax) {
-    return difference(null, keyMin, keyMax);
-  }
-
   @SuppressWarnings("unchecked")
   private Interval<T>[] difference(final Interval<T> key, final T keyMin, final T keyMax) {
     Interval<T> data;
@@ -786,7 +775,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
     final IntervalNode root = getRoot();
     if (keyMin == null) {
       if (root == null)
-        return new Interval[] {new Interval<>(keyMin, keyMax)};
+        return new Interval[] {key.newInstance(keyMin, keyMax)};
 
       minNode = root.getMinNode();
       data = minNode.getData();
@@ -799,7 +788,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
         return difference(minNode, key, dataMax, keyMax, 0);
 
       final Interval<T>[] diff = difference(minNode, key, dataMax, keyMax, 1);
-      diff[0] = new Interval<>(keyMin, dataMin);
+      diff[0] = key.newInstance(keyMin, dataMin);
       return diff;
     }
 
@@ -820,7 +809,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
     }
 
     if (minNode == null)
-      return new Interval[] {new Interval<>(keyMin, keyMax)};
+      return new Interval[] {key.newInstance(keyMin, keyMax)};
 
     data = minNode.getData();
     dataMax = data.getMax();
@@ -829,14 +818,14 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
       throw new IllegalArgumentException("Illegal interval: " + data.toString(keyMin, keyMax));
 
     final Interval<T>[] diff = dataMax != null && (keyMax == null || data.compare(keyMax, dataMax) > 0) ? difference(minNode, key, dataMax, keyMax, 1) : new Interval[1];
-    diff[0] = new Interval<>(keyMin, data.getMin());
+    diff[0] = key.newInstance(keyMin, data.getMin());
     return diff;
   }
 
   @SuppressWarnings("unchecked")
-  private Interval<T>[] newDiffArray(final T min, final T max, final int depth) {
+  private Interval<T>[] newDiffArray(final Interval<T> key, final T min, final T max, final int depth) {
     final Interval<T>[] diff = new Interval[depth + 1];
-    diff[depth] = new Interval<>(min, max);
+    diff[depth] = key.newInstance(min, max);
     return diff;
   }
 
@@ -853,17 +842,17 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
 
       node = next;
       if (node == null)
-        return newDiffArray(min, max, depth);
+        return newDiffArray(key, min, max, depth);
     }
 
     final Interval<T> data = node.getData();
     final T dataMin = data.getMin();
     if (max != null && key.compare(max, dataMin) < 0)
-      return newDiffArray(min, max, depth);
+      return newDiffArray(key, min, max, depth);
 
     final T dataMax = data.getMax();
     final Interval<T>[] diff = dataMax != null && (max == null || key.compare(max, dataMax) > 0) ? difference(node, key, dataMax, max, depth + 1) : new Interval[depth + 1];
-    diff[depth] = new Interval<>(min, dataMin);
+    diff[depth] = key.newInstance(min, dataMin);
     return diff;
   }
 

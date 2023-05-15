@@ -168,13 +168,13 @@ public class IntervalArraySet<T> implements IntervalSet<T>, Cloneable {
 
     if (toIndex - fromIndex != 1) {
       data.removeRange(fromIndex, toIndex);
-      data.add(fromIndex, new Interval<>(min, max));
+      data.add(fromIndex, key.newInstance(min, max));
     }
     else if (data.get(fromIndex).equals(min, max)) {
       return false;
     }
     else {
-      data.set(fromIndex, new Interval<>(min, max));
+      data.set(fromIndex, key.newInstance(min, max));
     }
 
     return true;
@@ -196,11 +196,6 @@ public class IntervalArraySet<T> implements IntervalSet<T>, Cloneable {
         return true;
 
     return false;
-  }
-
-  @Override
-  public Interval<T>[] difference(final T keyMin, final T keyMax) {
-    return difference(new Interval<>(keyMin, keyMax));
   }
 
   @Override
@@ -234,33 +229,33 @@ public class IntervalArraySet<T> implements IntervalSet<T>, Cloneable {
     final Interval<T>[] diff;
     if (key.compare(keyMin, fromMin) < 0) {
       if (key.compare(keyMax, toMax) >= 0) {
-        diff = getGaps(fromIndex, toIndex, true, true);
-        diff[0] = new Interval<>(keyMin, fromMin);
-        diff[diff.length - 1] = new Interval<>(toMax, keyMax);
+        diff = getGaps(key, fromIndex, toIndex, true, true);
+        diff[0] = key.newInstance(keyMin, fromMin);
+        diff[diff.length - 1] = key.newInstance(toMax, keyMax);
       }
       else {
-        diff = getGaps(fromIndex, toIndex, true, false);
+        diff = getGaps(key, fromIndex, toIndex, true, false);
         if (key.compare(keyMax, toMax) <= 0 && diff.length > 1) {
           final int len1 = diff.length - 1;
           final Interval<T> last = diff[len1];
           if (key.compare(last.getMax(), keyMax) > 0)
-            diff[len1] = new Interval<>(last.getMin(), keyMax);
+            diff[len1] = key.newInstance(last.getMin(), keyMax);
         }
 
-        diff[0] = new Interval<>(keyMin, fromMin);
+        diff[0] = key.newInstance(keyMin, fromMin);
       }
     }
     else if (key.compare(keyMax, toMax) >= 0) {
-      diff = getGaps(fromIndex, toIndex, false, true);
-      diff[diff.length - 1] = new Interval<>(toMax, keyMax);
+      diff = getGaps(key, fromIndex, toIndex, false, true);
+      diff[diff.length - 1] = key.newInstance(toMax, keyMax);
     }
     else {
-      diff = getGaps(fromIndex, toIndex, false, false);
+      diff = getGaps(key, fromIndex, toIndex, false, false);
       if (key.compare(keyMax, toMax) <= 0 && diff.length > 0) {
         final int len1 = diff.length - 1;
         final Interval<T> last = diff[len1];
         if (key.compare(last.getMax(), keyMax) > 0)
-          diff[len1] = new Interval<>(last.getMin(), keyMax);
+          diff[len1] = key.newInstance(last.getMin(), keyMax);
       }
     }
 
@@ -268,7 +263,7 @@ public class IntervalArraySet<T> implements IntervalSet<T>, Cloneable {
   }
 
   @SuppressWarnings("unchecked")
-  private Interval<T>[] getGaps(int fromIndex, final int toIndex, final boolean withSpaceFront, final boolean withSpaceBack) {
+  private Interval<T>[] getGaps(final Interval<T> key, int fromIndex, final int toIndex, final boolean withSpaceFront, final boolean withSpaceBack) {
     int len = toIndex - fromIndex;
     int i;
     if (withSpaceFront) {
@@ -285,7 +280,7 @@ public class IntervalArraySet<T> implements IntervalSet<T>, Cloneable {
     final Interval<T>[] gaps = new Interval[len];
     for (Interval<T> next, prev = data.get(fromIndex); ++fromIndex <= toIndex; prev = next) { // [RA]
       next = data.get(fromIndex);
-      gaps[i++] = new Interval<>(prev.getMax(), next.getMin());
+      gaps[i++] = key.newInstance(prev.getMax(), next.getMin());
     }
 
     return gaps;
@@ -341,7 +336,7 @@ public class IntervalArraySet<T> implements IntervalSet<T>, Cloneable {
     final T key = (T)o;
     final int size = size();
     int index;
-    if (size == 0 || size == (index = CollectionUtil.binaryClosestSearch(data, 0, size, key, i -> i.getMin(), data.get(0).comparator())))
+    if (size == 0 || size == (index = CollectionUtil.binaryClosestSearch(data, 0, size, key, i -> i.getMin(), data.get(0))))
       return false;
 
     Interval<T> i = data.get(index);

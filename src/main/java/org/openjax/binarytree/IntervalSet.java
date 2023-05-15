@@ -78,26 +78,6 @@ public interface IntervalSet<T> extends NavigableSet<Interval<T>> {
   Interval<T>[] difference(Interval<T> key);
 
   /**
-   * Returns an array of {@link Interval} objects representing the intervals that are not present in (i.e. contained by) this set
-   * within the range of the provided {@code keyMin} and {@code keyMax} values.
-   * <p>
-   * If the full range of the provided {@link Interval} is present (i.e. contained by) this set, then this method returns an empty
-   * array.
-   * <p>
-   * If the full range of the provided {@link Interval} is absent (i.e. not contained by) this set, then this method returns an
-   * array containing a reference to the provided {@link Interval}.
-   *
-   * @param keyMin The {@code min} value of the key representing the range within which to determine the intervals that are not
-   *          present in this set.
-   * @param keyMax The {@code max} value of the key representing the range within which to determine the intervals that are not
-   *          present in this set.
-   * @return An array of {@link Interval} objects representing the intervals that are not present in this set within the range of
-   *         the provided {@link Interval}.
-   * @throws IllegalArgumentException If a non-null {@code min} is greater than or equal to a non-null {@code max}.
-   */
-  Interval<T>[] difference(T keyMin, T keyMax);
-
-  /**
    * Returns {@code true} if an {@link Interval} of the provided {@code key} was removed from this set, otherwise {@code false}.
    *
    * @param key The {@link Interval} to remove from this set.
