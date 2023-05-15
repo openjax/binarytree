@@ -16,7 +16,7 @@
 
 package org.openjax.binarytree;
 
-interface ValueSpec<T extends Comparable<T>> {
+interface ValueSpec<T extends Comparable<? super T>> {
   Class<T> type();
   T minValue();
   T maxValue();

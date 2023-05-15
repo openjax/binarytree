@@ -920,7 +920,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
 
     final T keyMax = key.getMax();
     final T dataMax = node.getData().getMax();
-    return keyMax == null ? dataMax == null : dataMax != null && key.compare(keyMax, dataMax) <= 0;
+    return keyMax == null ? dataMax == null : dataMax == null || key.compare(keyMax, dataMax) <= 0;
   }
 
   @Override

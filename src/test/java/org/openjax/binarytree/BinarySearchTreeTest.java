@@ -33,7 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.libj.test.TestAide;
 import org.libj.util.CollectionUtil;
 
-public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T extends Comparable<T>> implements ValueSpec<T> {
+public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T extends Comparable<? super T>> implements ValueSpec<T> {
   static final ThreadLocalRandom random = ThreadLocalRandom.current();
 
   static final int repeat = 1000;

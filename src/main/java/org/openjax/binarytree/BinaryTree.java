@@ -31,7 +31,7 @@ import org.libj.util.Iterators;
  *
  * @param <T> The type parameter of values belonging to this tree.
  */
-public abstract class BinaryTree<T extends Comparable<T>> implements Cloneable {
+public abstract class BinaryTree<T extends Comparable<? super T>> implements Cloneable {
   protected class Node {
     private T data;
     private Node parent;

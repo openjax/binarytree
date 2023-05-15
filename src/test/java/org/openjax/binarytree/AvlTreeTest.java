@@ -31,7 +31,7 @@ public class AvlTreeTest extends BinarySearchTreeIntegerTest<AvlTree<Integer>> {
     validateAVLInvariant(tree.getRoot(), onError);
   }
 
-  static <BST extends AvlTree<T>,T extends Comparable<T>>void validateAVLInvariant(final BST.AvlNode node, final Supplier<String> onError) {
+  static <BST extends AvlTree<T>,T extends Comparable<? super T>>void validateAVLInvariant(final BST.AvlNode node, final Supplier<String> onError) {
     if (node == null)
       return;
 

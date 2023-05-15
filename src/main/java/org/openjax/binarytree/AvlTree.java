@@ -21,7 +21,7 @@ package org.openjax.binarytree;
  *
  * @param <T> The type parameter of values belonging to this tree.
  */
-public class AvlTree<T extends Comparable<T>> extends BinarySearchTree.Recursive<T> {
+public class AvlTree<T extends Comparable<? super T>> extends BinarySearchTree.Recursive<T> {
   protected class AvlNode extends Node {
     private int height;
 

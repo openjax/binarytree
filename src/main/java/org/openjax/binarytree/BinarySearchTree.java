@@ -27,7 +27,7 @@ import org.libj.util.CollectionUtil;
  *
  * @param <T> The type parameter of values belonging to this tree.
  */
-public abstract class BinarySearchTree<T extends Comparable<T>> extends BinaryTree<T> implements Collection<T> {
+public abstract class BinarySearchTree<T extends Comparable<? super T>> extends BinaryTree<T> implements Collection<T> {
   /**
    * Ensures that this tree contains the specified key. Returns {@code true} if this tree changed as a result of the call, and
    * {@code false} if this tree already contains the specified element.
@@ -112,7 +112,7 @@ public abstract class BinarySearchTree<T extends Comparable<T>> extends BinaryTr
    *
    * @param <T> The type parameter of values belonging to this tree.
    */
-  protected static class Iterative<T extends Comparable<T>> extends BinarySearchTree<T> {
+  protected static class Iterative<T extends Comparable<? super T>> extends BinarySearchTree<T> {
     protected class IterativeNode extends Node {
       protected IterativeNode(final T data) {
         super(data);
@@ -245,7 +245,7 @@ public abstract class BinarySearchTree<T extends Comparable<T>> extends BinaryTr
    *
    * @param <T> The type parameter of values belonging to this tree.
    */
-  protected static class Recursive<T extends Comparable<T>> extends BinarySearchTree<T> {
+  protected static class Recursive<T extends Comparable<? super T>> extends BinarySearchTree<T> {
     transient boolean changed;
 
     @Override
