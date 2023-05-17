@@ -628,7 +628,8 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
      *              keyMax
      */
     final Interval<T> data = child.getData();
-    if (keyMax == null || key.compare(keyMax, data.getMax()) > 0) {
+    final T dataMax;
+    if (keyMax == null || (dataMax = data.getMax()) != null && key.compare(keyMax, dataMax) > 0) {
       // Skip the child, and merge to its right
       changed = true;
       return mergeRight(key, keyMax, dataMin, node, child.getRight());
@@ -648,7 +649,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
       return child.setLeft(mergeRight(key, keyMax, dataMin, node, child.getLeft()));
     }
 
-    keyMax = data.getMax();
+    keyMax = dataMax;
 
     { /* if (key.compare(keyMax, data.getMax()) > 0) { */ // Not needed, because mergeRight is called for c = 1, which guarantees this exact condition.
       node.setData(key.newInstance(dataMin, keyMax));
