@@ -819,7 +819,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
       throw new IllegalArgumentException("Illegal interval: " + data.toString(keyMin, keyMax));
 
     final Interval<T>[] diff = dataMax != null && (keyMax == null || data.compare(keyMax, dataMax) > 0) ? difference(minNode, key, dataMax, keyMax, 1) : new Interval[1];
-    diff[0] = key.newInstance(keyMin, data.getMin());
+    diff[0] = data.newInstance(keyMin, data.getMin());
     return diff;
   }
 
@@ -864,6 +864,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
    * @complexity O(log(n))
    */
   @Override
+  @SuppressWarnings("unchecked")
   public boolean contains(final Object o) {
     final IntervalNode root = getRoot();
     if (root == null)
