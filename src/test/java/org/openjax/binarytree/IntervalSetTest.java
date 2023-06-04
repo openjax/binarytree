@@ -361,9 +361,6 @@ abstract class IntervalSetTest {
         assertFalse(c.add(new Interval<>(v - 1, v)));
         assertArrayEquals(result, c.toArray());
 
-//        if (i == 1 && v == 11)
-//          System.out.println();
-
         final Interval<Integer> a = new Interval<>(null, c.first().getMax() + 1);
         assertTrue(c.add(a));
         final Interval<Integer> b;
@@ -375,8 +372,6 @@ abstract class IntervalSetTest {
           result[0] = a;
         }
 
-//        System.err.println(i + " " + v + " " + Arrays.toString(result));
-//        System.err.println(i + " " + v + " " + Arrays.toString(c.toArray()));
         assertArrayEquals(result, c.toArray());
       }
     }
@@ -393,12 +388,6 @@ abstract class IntervalSetTest {
         assertFalse(c.add(new Interval<>(v, null)));
         assertFalse(c.add(new Interval<>(v, v + 1)));
         assertArrayEquals(result, c.toArray());
-
-//        if (i == 3 && v == 22)
-//          System.out.println();
-
-//        System.err.println(i + " " + v + " " + Arrays.toString(result));
-//        System.err.println(i + " " + v + " " + Arrays.toString(c.toArray()));
 
         final Interval<Integer> a = new Interval<>(c.last().getMin() - 1, null);
         assertTrue(c.add(a));
