@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.libj.test.TestExecutorService;
 import org.libj.util.Interval;
-import org.libj.util.function.BiObjIntConsumer;
+import org.libj.util.function.TriObjIntConsumer;
 
 public class ConcurrentIntervalTreeSetTest {
   private static final Random random = new Random();
@@ -52,24 +52,25 @@ public class ConcurrentIntervalTreeSetTest {
         final int min = random.nextInt(10000);
         set.add(new Interval<>(min, min + 1 + random.nextInt(5)));
         modCount.getAndIncrement();
+//        System.err.print('.');
+//        System.err.flush();
         sleep(2);
       }
       while (!finished.get());
     });
   }
 
-  private static void run(final IntervalSet<Integer> set, final BiObjIntConsumer<IntervalSet<Integer>,AtomicInteger> tester, final int numTests) throws InterruptedException {
+  private static void run(final IntervalSet<Integer> set, final TriObjIntConsumer<IntervalSet<Integer>,AtomicInteger,AtomicBoolean> tester, final int numTests) throws InterruptedException {
     final TestExecutorService executor = new TestExecutorService(Executors.newFixedThreadPool(4));
     final AtomicInteger modCount = new AtomicInteger();
     final AtomicBoolean finished = new AtomicBoolean();
 
     seed(set, modCount, finished, executor);
-
     sleep(50);
 
     executor.execute(() -> {
       try {
-        tester.accept(set, modCount, numTests);
+        tester.accept(set, modCount, finished, numTests);
       }
       finally {
         finished.set(true);
@@ -80,10 +81,10 @@ public class ConcurrentIntervalTreeSetTest {
     executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
   }
 
-  private static void testIterator(final IntervalSet<Integer> set, final AtomicInteger modCount, final int numTests) {
+  private static void testIterator(final IntervalSet<Integer> set, final AtomicInteger modCount, final AtomicBoolean finished, final int numTests) {
     long time;
-    for (int i = 0, prev = -1, size; i < numTests; ++i, prev = -1) { // [N]
-      size = modCount.get();
+    for (int i = 0, prev = -1, prevModCount; i < numTests; ++i, prev = -1) { // [N]
+      prevModCount = modCount.get();
       time = System.currentTimeMillis();
       for (final Interval<Integer> key : set) { // [S]
         final Integer next = key.getMin();
@@ -94,15 +95,15 @@ public class ConcurrentIntervalTreeSetTest {
         prev = next;
       }
 
-      assertTrue(modCount.get() > size);
+      assertTrue(modCount.get() > prevModCount);
       sleep(10);
     }
   }
 
-  private static void testForEach(final IntervalSet<Integer> set, final AtomicInteger modCount, final int numTests) {
+  private static void testForEach(final IntervalSet<Integer> set, final AtomicInteger modCount, final AtomicBoolean finished, final int numTests) {
     final AtomicInteger prev = new AtomicInteger(-1);
-    for (int i = 0, size; i < numTests; ++i, prev.set(-1)) { // [N]
-      size = modCount.get();
+    for (int i = 0, prevModCount; i < numTests; ++i, prev.set(-1)) { // [N]
+      prevModCount = modCount.get();
       final long time = System.currentTimeMillis();
       set.forEach(key -> {
         final Integer next = key.getMin();
@@ -113,9 +114,64 @@ public class ConcurrentIntervalTreeSetTest {
         prev.set(next);
       });
 
-      assertTrue(modCount.get() > size);
+      assertTrue(modCount.get() > prevModCount);
       sleep(10);
     }
+  }
+
+  private static void testRemoveIf(final IntervalSet<Integer> set, final AtomicInteger modCount, final AtomicBoolean finished, final int numTests) {
+    if (numTests == 10) {
+      finished.set(true);
+      sleep(10);
+    }
+
+    assertTrue(modCount.get() > 0);
+    final AtomicInteger prev = new AtomicInteger(-1);
+    final AtomicInteger prevPrev = new AtomicInteger(-1);
+    for (int i = 0, prevModCount; i < numTests; ++i, prev.set(-1), prevPrev.set(-1)) { // [N]
+      prevModCount = modCount.get();
+      final long time = System.currentTimeMillis();
+      set.removeIf(key -> {
+        final Integer next = key.getMin();
+        if (prev.get() < prevPrev.get())
+          fail("next (" + prev.get() + ")" + " < " + "prev (" + prevPrev.get() + ")");
+
+        sleep(20 + time - System.currentTimeMillis());
+        prevPrev.set(prev.get());
+        prev.set(next);
+        return next % 2 == 0 && set.size() > 5;
+      });
+
+      sleep(20);
+
+      if (numTests > 10)
+        assertTrue(modCount.get() > prevModCount);
+    }
+  }
+
+  @Test
+  public void testRemoveIfIntervalTreeSetSingleThread() throws InterruptedException {
+    run(new IntervalTreeSet<>(), ConcurrentIntervalTreeSetTest::testRemoveIf, 10);
+  }
+
+  @Test
+  public void testRemoveIfConcurrentIntervalTreeSetSingleThread() throws InterruptedException {
+    run(new ConcurrentIntervalTreeSet<>(), ConcurrentIntervalTreeSetTest::testRemoveIf, 10);
+  }
+
+  @Test
+  public void testRemoveIfIntervalTreeSet() throws InterruptedException {
+    try {
+      run(new IntervalTreeSet<>(), ConcurrentIntervalTreeSetTest::testRemoveIf, 5000);
+      fail("Expected ConcurrentModificationException");
+    }
+    catch (final ConcurrentModificationException e) {
+    }
+  }
+
+  @Test
+  public void testRemoveIfConcurrentIntervalTreeSet() throws InterruptedException {
+    run(new ConcurrentIntervalTreeSet<>(), ConcurrentIntervalTreeSetTest::testRemoveIf, 100);
   }
 
   @Test

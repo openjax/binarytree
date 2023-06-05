@@ -22,7 +22,6 @@ import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.NavigableSet;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.SortedSet;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -260,7 +259,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
 
   private IntervalNode add(final Interval<T> key, final IntervalNode node) {
     if (node == null) {
-      ++modCount;
+      ppMod();
       changed = true;
       return newNode(key);
     }
@@ -469,7 +468,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
     if (key.getMin() == null && key.getMax() == null) {
       if (root == null) {
         setRoot(add(key, newNode(key)));
-        ++modCount;
+        ppMod();
         return true;
       }
 
@@ -480,7 +479,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
       root.setData(key);
       root.setLeft(null);
       root.setRight(null);
-      ++modCount;
+      ppMod();
       return true;
     }
 
@@ -620,7 +619,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
         return deleteNodeRight(key, node);
 
       if (dataMin == null || key.compare(keyMin, dataMin) > 0) { // If key intersects node on the right of node.min
-        ++modCount;
+        ppMod();
         changed = true;
         node.setData(key.newInstance(dataMin, keyMin));
         if (keyMax != null && (dataMax == null || key.compare(keyMax, dataMax) < 0)) // Split into two
@@ -637,14 +636,14 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
       // If key intersects node on the left of node.min
 
       if (dataMax == null || key.compare(keyMax, dataMax) < 0) { // If key partially intersects node on the left
-        ++modCount;
+        ppMod();
         changed = true;
         node.setData(key.newInstance(keyMax, dataMax));
         return deleteNodeLeft(key, node);
       }
     }
 
-    ++modCount;
+    ppMod();
     changed = true;
 
     // Otherwise, key intersects node entirely, so return its child(ren)
@@ -964,13 +963,13 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
         node.superSetRight(mergeRight(key, keyMax, keyMin, node, node.getRight()));
 //        if (nodeData == node.getData()) { // Seems to not be needed, because it's guaranteed that `mergeRight` will call `node.setData()`.
 //          node.setData(key.newInstance(keyMin, nodeMax));
-//          ++modCount;
+//          ppMod();
 //          changed = true;
 //        }
       }
       else {
         node.setData(key.newInstance(keyMin, nodeMax));
-        ++modCount;
+        ppMod();
         changed = true;
       }
 
@@ -992,7 +991,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
     if (keyMin == null || childMin != null && key.compare(keyMin, childMin) <= 0) {
 //      node.setMinNode(node); // FIXME: Is this needed?
       // Skip the child, and merge to its left
-      ++modCount;
+      ppMod();
       changed = true;
       return mergeLeft(key, keyMin, node, child.getLeft());
     }
@@ -1020,13 +1019,13 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
       node.superSetRight(mergeRight(key, keyMax, updateMin ? childMin : keyMin, node, node.getRight()));
 //      if (nodeData == node.getData() && updateMin) { // Seems to not be needed, because it's guaranteed that `mergeRight` will call `node.setData()`.
 //        node.setData(key.newInstance(childMin, nodeMax));
-//        ++modCount;
+//        ppMod();
 //        changed = true;
 //      }
     }
     else { /* if (key.compare(childMin, nodeData.getMin()) < 0) { */ // Not needed, because mergeLeft is called for c = -1, which guarantees this exact condition.
       node.setData(key.newInstance(childMin, dataMax));
-      ++modCount;
+      ppMod();
       changed = true;
     }
 
@@ -1050,7 +1049,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
       final T dataMax = node.getData().getMax();
       if (dataMax != null && (keyMax == null || key.compare(keyMax, dataMax) > 0)) {
         node.setData(key.newInstance(dataMin, keyMax));
-        ++modCount;
+        ppMod();
         changed = true;
       }
 
@@ -1070,7 +1069,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
     final T dataMax;
     if (keyMax == null || (dataMax = data.getMax()) != null && key.compare(keyMax, dataMax) > 0) {
       // Skip the child, and merge to its right
-      ++modCount;
+      ppMod();
       changed = true;
       return mergeRight(key, keyMax, dataMin, node, child.getRight());
     }
@@ -1093,7 +1092,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
 
     { /* if (key.compare(keyMax, data.getMax()) > 0) { */ // Not needed, because mergeRight is called for c = 1, which guarantees this exact condition.
       node.setData(key.newInstance(dataMin, keyMax));
-      ++modCount;
+      ppMod();
       changed = true;
     }
 
@@ -1169,7 +1168,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
       if (newRoot != null)
         newRoot.setParent(null);
 
-      ++modCount;
+      ppMod();
       setRoot(newRoot);
       return true;
     }
@@ -1185,17 +1184,18 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
 
   @Override
   public boolean removeIf(final Predicate<? super Interval<T>> filter) {
-    Objects.requireNonNull(filter);
     final IntervalNode root = getRoot();
     if (root == null)
       return false;
 
-    final int mc = modCount;
+    int mc = modCount;
     boolean removed = false;
     final BinaryTreeIterator i = new BinaryTreeIterator(root);
     while (i.hasNext()) {
       if (filter.test(i.next())) {
+        ++mc;
         i.remove();
+        ++modCount;
         removed = true;
       }
     }

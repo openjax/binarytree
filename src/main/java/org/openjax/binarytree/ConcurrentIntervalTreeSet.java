@@ -406,7 +406,6 @@ public class ConcurrentIntervalTreeSet<T> extends IntervalTreeSet<T> {
 
   @Override
   public boolean removeIf(final Predicate<? super Interval<T>> filter) {
-    Objects.requireNonNull(filter);
     reading.lock();
     try {
       final IntervalNode root = getRoot();

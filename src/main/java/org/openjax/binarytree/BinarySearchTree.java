@@ -80,14 +80,13 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
           inOrderSuccessor.getParent().setLeft(inOrderSuccessor.getRight());
       }
 
-      ++modCount;
       return node;
     }
 
     protected Node insertNode(final T key) {
       Node node = getRoot();
       if (node == null) {
-        ++modCount;
+        ppMod();
         setRoot(node = newNode(key));
         return node;
       }
@@ -144,6 +143,7 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
         return false;
 
       deleteNode(key, node);
+      ppMod();
       return true;
     }
 
@@ -162,15 +162,12 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
 
     private void set(final Node node, final Node child, final T key) {
       final Node parent = node.getParent();
-      if (node == getRoot()) {
+      if (node == getRoot())
         setRoot(child);
-      }
-      else {
-        if (key.compareTo(parent.getData()) < 0)
-          parent.setLeft(child);
-        else
-          parent.setRight(child);
-      }
+      else if (key.compareTo(parent.getData()) < 0)
+        parent.setLeft(child);
+      else
+        parent.setRight(child);
 
       if (child != null)
         child.setParent(parent);
@@ -203,15 +200,14 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
         return null;
 
       final Node left = node.getLeft();
-      final Node right = node.getRight();
       final int c = key.compareTo(node.getData());
       if (c < 0)
         return node.setLeft(deleteNode(key, left));
 
+      final Node right = node.getRight();
       if (c > 0)
         return node.setRight(deleteNode(key, right));
 
-      ++modCount;
       changed = true;
 
       if (left == null) {
@@ -235,7 +231,7 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
 
     protected Node insertNode(final T key, final Node node) {
       if (node == null) {
-        ++modCount;
+        ppMod();
         changed = true;
         return newNode(key);
       }
@@ -253,6 +249,9 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
     protected boolean removeFast(final T key) {
       changed = false;
       setRoot(deleteNode(key, getRoot()));
+      if (changed)
+        ++modCount;
+
       return changed;
     }
 

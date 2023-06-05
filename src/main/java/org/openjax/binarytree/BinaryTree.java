@@ -91,6 +91,10 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
     }
   }
 
+  void ppMod() {
+    ++modCount;
+  }
+
   protected class Node {
     private T data;
     private Node parent;
@@ -461,7 +465,7 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
    * @complexity O(1)
    */
   public void clear() {
-    ++modCount;
+    ppMod();
     setRoot(null);
   }
 
