@@ -108,7 +108,7 @@ public class IntervalTreeSetRTest extends BinarySearchTreeTest<IntervalTreeSet<I
 
   @Override
   IntervalTreeSet<Integer> createTree() {
-    return new IntervalTreeSet<>();
+    return new ConcurrentIntervalTreeSet<>();
   }
 
   @Override
@@ -168,7 +168,7 @@ public class IntervalTreeSetRTest extends BinarySearchTreeTest<IntervalTreeSet<I
 
   @Test
   public final void testEmptyTreeEchoDifference() {
-    final IntervalTreeSet<Integer> tree = new IntervalTreeSet<>();
+    final IntervalTreeSet<Integer> tree = createTree();
     test(onError -> {
       assertSpecificTreeInvariants(tree, onError);
 
@@ -213,7 +213,8 @@ public class IntervalTreeSetRTest extends BinarySearchTreeTest<IntervalTreeSet<I
   @Test
   public void testDifferenceRemove() {
     for (int r = 0; r < repeat; ++r) { // [N]
-      final IntervalTreeSet<Integer> tree = new IntervalTreeSet<>(createOrderedSequenceOfKeys());
+      final IntervalTreeSet<Integer> tree = createTree();
+      tree.addAll(createOrderedSequenceOfKeys());
       final int size = tree.size();
       if (size < 4)
         continue;
@@ -312,7 +313,8 @@ public class IntervalTreeSetRTest extends BinarySearchTreeTest<IntervalTreeSet<I
   public void testPollFirst() {
     for (int r = 0; r < repeat / 100; ++r) { // [N]
       for (int c = 2, m = 4, f = 8; c <= 65536; c += f += 1, m = c * 2) { // [N]
-        final IntervalTreeSet<Integer> tree = new IntervalTreeSet<>(createRandomIntervalList(c, m));
+        final IntervalTreeSet<Integer> tree = createTree();
+        tree.addAll(createRandomIntervalList(c, m));
         test(onError -> {
           final IntervalTreeSet<Integer> clone = tree.clone();
           int size = clone.size();
@@ -341,7 +343,8 @@ public class IntervalTreeSetRTest extends BinarySearchTreeTest<IntervalTreeSet<I
   public void testPollLast() {
     for (int r = 0; r < repeat / 100; ++r) { // [N]
       for (int c = 2, m = 4, f = 8; c <= 65536; c += f += 1, m = c * 2) { // [N]
-        final IntervalTreeSet<Integer> tree = new IntervalTreeSet<>(createRandomIntervalList(c, m));
+        final IntervalTreeSet<Integer> tree = createTree();
+        tree.addAll(createRandomIntervalList(c, m));
         test(onError -> {
           final IntervalTreeSet<Integer> clone = tree.clone();
           int size = clone.size();
@@ -371,7 +374,8 @@ public class IntervalTreeSetRTest extends BinarySearchTreeTest<IntervalTreeSet<I
       for (int c = 2, m = 4, f = 8; c <= 65536; c += f += 1, m = c * 2) { // [N]
         final ArrayList<Interval<Integer>> keys = createRandomIntervalList(c, m);
         final IntervalSet<Integer> list = new IntervalArraySet<>(keys);
-        final IntervalSet<Integer> tree = new IntervalTreeSet<>(keys);
+        final IntervalSet<Integer> tree = createTree();
+        tree.addAll(keys);
 
         final int size = tree.size();
         final Interval<Integer>[] array = tree.toArray(new Interval[size]);
@@ -484,7 +488,7 @@ public class IntervalTreeSetRTest extends BinarySearchTreeTest<IntervalTreeSet<I
     test(onError -> {
       final boolean[] added = new boolean[keys.size()];
       final IntervalArraySet<Integer> array = test(keys, new IntervalArraySet<Integer>(), added, true, times, 0, onError);
-      final IntervalTreeSet<Integer> tree = test(keys, new IntervalTreeSet<Integer>(), added, false, times, 1, onError);
+      final IntervalTreeSet<Integer> tree = test(keys, createTree(), added, false, times, 1, onError);
 
       assertEquals(array.size(), tree.size(), onError);
       assertEquals(array.toString(), tree.toString(), onError(onError, () -> keys.toString()));

@@ -29,20 +29,15 @@ public class AvlTree<T extends Comparable<? super T>> extends BinarySearchTree.R
       super(data);
     }
 
-    @Override
-    protected AvlNode getParent() {
-      return (AvlNode)super.getParent();
-    }
-
-    protected Node superSetLeft(final Node node) {
-      return super.setLeft(node);
+    protected int balanceFactor() {
+      return height(getRight()) - height(getLeft());
     }
 
     @Override
-    protected AvlNode setLeft(final Node node) {
-      superSetLeft(node);
-      updateHeight();
-      return rebalance();
+    protected AvlNode clone(final BinaryTree<T> tree) {
+      final AvlNode clone = (AvlNode)super.clone(tree);
+      clone.height = height;
+      return clone;
     }
 
     @Override
@@ -50,20 +45,46 @@ public class AvlTree<T extends Comparable<? super T>> extends BinarySearchTree.R
       return (AvlNode)super.getLeft();
     }
 
-    protected Node superSetRight(final Node node) {
-      return super.setRight(node);
-    }
-
     @Override
-    protected AvlNode setRight(final Node node) {
-      superSetRight(node);
-      updateHeight();
-      return rebalance();
+    protected AvlNode getParent() {
+      return (AvlNode)super.getParent();
     }
 
     @Override
     protected AvlNode getRight() {
       return (AvlNode)super.getRight();
+    }
+
+    @Override
+    protected String getText() {
+      return getData() + " {H=" + height + ",BF=" + balanceFactor() + ",S=" + getSize() + "}";
+    }
+
+    protected AvlNode rebalance() {
+      final int balanceFactor = balanceFactor();
+
+      if (balanceFactor < -1) {
+        final AvlNode left = getLeft();
+        if (left.balanceFactor() > 0)
+          superSetLeft(left.rotateLeft());
+
+        return rotateRight();
+      }
+
+      if (balanceFactor > 1) {
+        final AvlNode right = getRight();
+        if (right.balanceFactor() < 0)
+          superSetRight(right.rotateRight());
+
+        return rotateLeft();
+      }
+
+      return this;
+    }
+
+    @Override
+    protected void replaceInOrderSuccessor(final Node inOrderSuccessor, final Node right) {
+      replaceRight(this, deleteNode(inOrderSuccessor.getData(), right));
     }
 
     @Override
@@ -100,16 +121,6 @@ public class AvlTree<T extends Comparable<? super T>> extends BinarySearchTree.R
       return avlNode;
     }
 
-    @Override
-    protected void replaceInOrderSuccessor(final Node inOrderSuccessor, final Node right) {
-      replaceRight(this, deleteNode(inOrderSuccessor.getData(), right));
-    }
-
-    @Override
-    protected String getText() {
-      return getData() + " {H=" + height + ",BF=" + balanceFactor() + ",S=" + getSize() + "}";
-    }
-
     protected AvlNode rotateLeft() {
       final AvlNode rightChild = getRight();
       rightChild.setParent(null);
@@ -126,6 +137,28 @@ public class AvlTree<T extends Comparable<? super T>> extends BinarySearchTree.R
       return leftChild;
     }
 
+    @Override
+    protected AvlNode setLeft(final Node node) {
+      superSetLeft(node);
+      updateHeight();
+      return rebalance();
+    }
+
+    @Override
+    protected AvlNode setRight(final Node node) {
+      superSetRight(node);
+      updateHeight();
+      return rebalance();
+    }
+
+    protected Node superSetLeft(final Node node) {
+      return super.setLeft(node);
+    }
+
+    protected Node superSetRight(final Node node) {
+      return super.setRight(node);
+    }
+
     protected void updateHeight() {
       this.height = Math.max(height(getLeft()), height(getRight())) + 1;
     }
@@ -135,39 +168,6 @@ public class AvlTree<T extends Comparable<? super T>> extends BinarySearchTree.R
       updateHeight();
       super.updateNode();
     }
-
-    protected AvlNode rebalance() {
-      final int balanceFactor = balanceFactor();
-
-      if (balanceFactor < -1) {
-        final AvlNode left = getLeft();
-        if (left.balanceFactor() > 0)
-          superSetLeft(left.rotateLeft());
-
-        return rotateRight();
-      }
-
-      if (balanceFactor > 1) {
-        final AvlNode right = getRight();
-        if (right.balanceFactor() < 0)
-          superSetRight(right.rotateRight());
-
-        return rotateLeft();
-      }
-
-      return this;
-    }
-
-    protected int balanceFactor() {
-      return height(getRight()) - height(getLeft());
-    }
-
-    @Override
-    protected AvlNode clone(final BinaryTree<T> tree) {
-      final AvlNode clone = (AvlNode)super.clone(tree);
-      clone.height = height;
-      return clone;
-    }
   }
 
   protected static int height(final AvlTree<?>.AvlNode node) {
@@ -175,8 +175,8 @@ public class AvlTree<T extends Comparable<? super T>> extends BinarySearchTree.R
   }
 
   @Override
-  protected AvlNode newNode(final T key) {
-    return new AvlNode(key);
+  public AvlTree<T> clone() {
+    return (AvlTree<T>)super.clone();
   }
 
   @Override
@@ -185,7 +185,7 @@ public class AvlTree<T extends Comparable<? super T>> extends BinarySearchTree.R
   }
 
   @Override
-  public AvlTree<T> clone() {
-    return (AvlTree<T>)super.clone();
+  protected AvlNode newNode(final T key) {
+    return new AvlNode(key);
   }
 }

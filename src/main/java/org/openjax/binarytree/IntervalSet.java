@@ -27,17 +27,6 @@ import org.libj.util.Interval;
  */
 public interface IntervalSet<T> extends NavigableSet<Interval<T>> {
   /**
-   * Returns {@code true} if the provided {@code key} is present in (i.e. contained by) at least one {@link Interval} in this set,
-   * otherwise {@code false}.
-   *
-   * @param key The key whose presence in this set is to be tested.
-   * @return {@code true} if the provided {@code key} is present in (i.e. contained by) at least one {@link Interval} in this set,
-   *         otherwise {@code false}.
-   */
-  @Override
-  boolean contains(Object key);
-
-  /**
    * Returns {@code true} if the full span (i.e. from the {@linkplain Interval#getMin() min} to the {@linkplain Interval#getMax()
    * max} coordinates, which includes the min and max values themselves) of the provided {@code key} is present in (i.e. contained
    * by) at least one {@link Interval} in this set, otherwise {@code false}.
@@ -49,16 +38,15 @@ public interface IntervalSet<T> extends NavigableSet<Interval<T>> {
   boolean contains(Interval<T> key);
 
   /**
-   * Returns {@code true} if part of the span (i.e. from the {@linkplain Interval#getMin() min} to the {@linkplain Interval#getMax()
-   * max} coordinates, which includes the min and max values themselves) of the provided {@code key} is present in (i.e. contained
-   * by) at least one {@link Interval} in this set, otherwise {@code false}.
+   * Returns {@code true} if the provided {@code key} is present in (i.e. contained by) at least one {@link Interval} in this set,
+   * otherwise {@code false}.
    *
-   * @param key The {@link Interval} to test for intersection with this set.
-   * @return {@code true} if part of the span (i.e. from the {@linkplain Interval#getMin() min} to the {@linkplain Interval#getMax()
-   *         max} coordinates, which includes the min and max values themselves) of the provided {@link Interval} is present in
-   *         (i.e. contained by) at least one {@link Interval} in this set, otherwise {@code false}.
+   * @param key The key whose presence in this set is to be tested.
+   * @return {@code true} if the provided {@code key} is present in (i.e. contained by) at least one {@link Interval} in this set,
+   *         otherwise {@code false}.
    */
-  boolean intersects(Interval<T> key);
+  @Override
+  boolean contains(Object key);
 
   /**
    * Returns an array of {@link Interval} objects representing the intervals that are not present in (i.e. contained by) this set
@@ -76,6 +64,18 @@ public interface IntervalSet<T> extends NavigableSet<Interval<T>> {
    *         the provided {@link Interval}.
    */
   Interval<T>[] difference(Interval<T> key);
+
+  /**
+   * Returns {@code true} if part of the span (i.e. from the {@linkplain Interval#getMin() min} to the {@linkplain Interval#getMax()
+   * max} coordinates, which includes the min and max values themselves) of the provided {@code key} is present in (i.e. contained
+   * by) at least one {@link Interval} in this set, otherwise {@code false}.
+   *
+   * @param key The {@link Interval} to test for intersection with this set.
+   * @return {@code true} if part of the span (i.e. from the {@linkplain Interval#getMin() min} to the {@linkplain Interval#getMax()
+   *         max} coordinates, which includes the min and max values themselves) of the provided {@link Interval} is present in
+   *         (i.e. contained by) at least one {@link Interval} in this set, otherwise {@code false}.
+   */
+  boolean intersects(Interval<T> key);
 
   /**
    * Returns {@code true} if an {@link Interval} of the provided {@code key} was removed from this set, otherwise {@code false}.

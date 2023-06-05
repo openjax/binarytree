@@ -18,6 +18,7 @@ package org.openjax.binarytree;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -32,6 +33,64 @@ import org.libj.util.Iterators;
  * @param <T> The type parameter of values belonging to this tree.
  */
 public abstract class BinaryTree<T extends Comparable<? super T>> implements Cloneable {
+  protected class BinaryTreeIterator implements Iterator<T> {
+    private Node prevPrev = null, prev = null, next;
+
+    BinaryTreeIterator(final Node root) {
+      next = root.getMinNode();
+    }
+
+    @Override
+    public boolean hasNext() {
+      return next != null;
+    }
+
+    @Override
+    public T next() {
+      return _next();
+    }
+
+    protected T _next() {
+      if (next == null)
+        throw new NoSuchElementException();
+
+      final T data = next.getData();
+      prevPrev = prev;
+      prev = next;
+
+      final Node right = next.getRight();
+      if (right != null) {
+        next = right.getMinNode();
+      }
+      else {
+        Node next = this.next;
+        while ((next = next.getParent()) != null && next.getLeft() != this.next)
+          this.next = next;
+
+        this.next = next;
+      }
+
+      return data;
+    }
+
+    @Override
+    public void remove() {
+      if (prev == null)
+        throw new IllegalStateException();
+
+      prev.delete();
+      next = prev = prevPrev;
+      if (next != null) {
+        _next();
+      }
+      else {
+        final Node root = getRoot();
+        if (root != null)
+          next = root.getMinNode();
+      }
+    }
+  }
+
   protected class Node {
     private T data;
     private Node parent;
@@ -43,74 +102,21 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
       setData(data);
     }
 
-    protected T getData() {
-      return data;
-    }
+    protected Node clone(final BinaryTree<T> tree) {
+      final Node clone = tree.newNode(data);
+      clone.size = size;
 
-    protected void setData(final T data) {
-      this.data = data;
-    }
+      if (left != null) {
+        final Node leftClone = clone.left = left.clone(tree);
+        leftClone.parent = clone;
+      }
 
-    protected Node getParent() {
-      return parent;
-    }
+      if (right != null) {
+        final Node rightClone = clone.right = right.clone(tree);
+        rightClone.parent = clone;
+      }
 
-    protected void setParent(final Node parent) {
-      this.parent = parent;
-    }
-
-    protected Node getLeft() {
-      return left;
-    }
-
-    protected Node setLeft(final Node node) {
-      if (node != null)
-        node.setParent(this);
-
-      this.left = node;
-      updateSize();
-      return this;
-    }
-
-    protected Node getRight() {
-      return right;
-    }
-
-    protected Node setRight(final Node node) {
-      if (node != null)
-        node.setParent(this);
-
-      this.right = node;
-      updateSize();
-      return this;
-    }
-
-    protected int getSize() {
-      return size;
-    }
-
-    protected void updateSize() {
-      size = size(left) + size(right) + 1;
-    }
-
-    protected void updateNode() {
-      updateSize();
-    }
-
-    protected Node getMinNode() {
-      Node node = this;
-      while (node.left != null)
-        node = node.left;
-
-      return node;
-    }
-
-    protected Node getMaxNode() {
-      Node node = this;
-      while (node.right != null)
-        node = node.right;
-
-      return node;
+      return clone;
     }
 
     protected void delete() {
@@ -144,6 +150,77 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
       }
     }
 
+    @Override
+    public boolean equals(final Object obj) {
+      if (obj == this)
+        return true;
+
+      if (!(obj instanceof BinaryTree.Node))
+        return false;
+
+      final BinaryTree<?>.Node that = (BinaryTree<?>.Node)obj;
+      return Objects.equals(left, that.left) && Objects.equals(right, that.right);
+    }
+
+    protected T getData() {
+      return data;
+    }
+
+    protected Node getLeft() {
+      return left;
+    }
+
+    protected Node getMaxNode() {
+      Node node = this;
+      while (node.right != null)
+        node = node.right;
+
+      return node;
+    }
+
+    protected Node getMinNode() {
+      Node node = this;
+      while (node.left != null)
+        node = node.left;
+
+      return node;
+    }
+
+    protected Node getParent() {
+      return parent;
+    }
+
+    protected Node getRight() {
+      return right;
+    }
+
+    protected int getSize() {
+      return size;
+    }
+
+    protected String getText() {
+      return data.toString() + " {S=" + size + "}";
+    }
+
+    @Override
+    public int hashCode() {
+      int hashCode = 0;
+      if (left != null)
+        hashCode = hashCode * 31 + left.hashCode();
+
+      if (right != null)
+        hashCode = hashCode * 31 + right.hashCode();
+
+      return hashCode;
+    }
+
+    protected void replaceInOrderSuccessor(final Node inOrderSuccessor, final Node right) {
+      if (inOrderSuccessor == right)
+        replaceRight(this, inOrderSuccessor.getRight());
+      else
+        replaceLeft(inOrderSuccessor.getParent(), inOrderSuccessor.getRight());
+    }
+
     protected Node replaceLeft(final Node node, final Node child) {
       final Node rebalanced = node.setLeft(child);
       Node parent = node;
@@ -162,15 +239,30 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
       return rebalanced;
     }
 
-    protected void replaceInOrderSuccessor(final Node inOrderSuccessor, final Node right) {
-      if (inOrderSuccessor == right)
-        replaceRight(this, inOrderSuccessor.getRight());
-      else
-        replaceLeft(inOrderSuccessor.getParent(), inOrderSuccessor.getRight());
+    protected void setData(final T data) {
+      this.data = data;
     }
 
-    protected String getText() {
-      return data.toString() + " {S=" + size + "}";
+    protected Node setLeft(final Node node) {
+      if (node != null)
+        node.setParent(this);
+
+      this.left = node;
+      updateSize();
+      return this;
+    }
+
+    protected void setParent(final Node parent) {
+      this.parent = parent;
+    }
+
+    protected Node setRight(final Node node) {
+      if (node != null)
+        node.setParent(this);
+
+      this.right = node;
+      updateSize();
+      return this;
     }
 
     @Override
@@ -316,45 +408,12 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
       return b.toString();
     }
 
-    protected Node clone(final BinaryTree<T> tree) {
-      final Node clone = tree.newNode(data);
-      clone.size = size;
-
-      if (left != null) {
-        final Node leftClone = clone.left = left.clone(tree);
-        leftClone.parent = clone;
-      }
-
-      if (right != null) {
-        final Node rightClone = clone.right = right.clone(tree);
-        rightClone.parent = clone;
-      }
-
-      return clone;
+    protected void updateNode() {
+      updateSize();
     }
 
-    @Override
-    public boolean equals(final Object obj) {
-      if (obj == this)
-        return true;
-
-      if (!(obj instanceof BinaryTree.Node))
-        return false;
-
-      final BinaryTree<?>.Node that = (BinaryTree<?>.Node)obj;
-      return Objects.equals(left, that.left) && Objects.equals(right, that.right);
-    }
-
-    @Override
-    public int hashCode() {
-      int hashCode = 0;
-      if (left != null)
-        hashCode = hashCode * 31 + left.hashCode();
-
-      if (right != null)
-        hashCode = hashCode * 31 + right.hashCode();
-
-      return hashCode;
+    protected void updateSize() {
+      size = size(left) + size(right) + 1;
     }
   }
 
@@ -370,115 +429,6 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
     return node != null ? node.size : 0;
   }
 
-  private Node root;
-
-  protected void setRoot(final Node root) {
-    this.root = root;
-  }
-
-  protected Node getRoot() {
-    return root;
-  }
-
-  /**
-   * Returns a new instance of this class's specific {@link Node} subclass with the provided key.
-   *
-   * @param key The key.
-   * @return A new instance of this class's specific {@link Node} subclass with the provided key.
-   * @complexity O(1)
-   */
-  protected Node newNode(final T key) {
-    return new Node(key);
-  }
-
-  /**
-   * Returns an {@link Iterator} over the elements in this set in ascending order.
-   *
-   * @return An {@link Iterator} over the elements in this set in ascending order.
-   * @complexity O(1)
-   */
-  public Iterator<T> iterator() {
-    return isEmpty() ? Iterators.empty() : new Iterator<T>() {
-      private Node prevPrev = null, prev = null, next = getRoot().getMinNode();
-
-      @Override
-      public boolean hasNext() {
-        return next != null;
-      }
-
-      @Override
-      public T next() {
-        if (next == null)
-          throw new NoSuchElementException();
-
-        final T data = next.getData();
-        prevPrev = prev;
-        prev = next;
-
-        final Node right = next.getRight();
-        if (right != null) {
-          next = right.getMinNode();
-        }
-        else {
-          Node next = this.next;
-          while ((next = next.getParent()) != null && next.getLeft() != this.next)
-            this.next = next;
-
-          this.next = next;
-        }
-
-        return data;
-      }
-
-      @Override
-      public void remove() {
-        if (prev == null)
-          throw new IllegalStateException();
-
-        prev.delete();
-        next = prev = prevPrev;
-        if (next != null) {
-          next();
-        }
-        else {
-          final Node root = getRoot();
-          if (root != null)
-            next = root.getMinNode();
-        }
-      }
-    };
-  }
-
-  /**
-   * Returns {@code true} if this set has zero elements, otherwise {@code false}.
-   *
-   * @return {@code true} if this set has zero elements, otherwise {@code false}.
-   * @complexity O(1)
-   */
-  public boolean isEmpty() {
-    return getRoot() == null;
-  }
-
-  /**
-   * Removes all of the elements from this set (i.e. the set will be empty after this method returns).
-   *
-   * @complexity O(1)
-   */
-  public void clear() {
-    setRoot(null);
-  }
-
-  /**
-   * Returns the number of elements in this set.
-   *
-   * @return The number of elements in this set.
-   * @complexity O(1)
-   */
-  public int size() {
-    final Node root = getRoot();
-    return root != null ? root.getSize() : 0;
-  }
-
   private static int toArray(final BinaryTree<?>.Node n, final Object[] a, int index) {
     if (n == null)
       return index;
@@ -488,67 +438,31 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
     return toArray(n.getRight(), a, index);
   }
 
-  /**
-   * Returns an array containing all of the elements in this set in ascending order. The returned array's
-   * {@linkplain Class#getComponentType runtime component type} is {@code Object}.
-   * <p>
-   * The returned array will be "safe" in that no references to it are maintained by this set. (In other words, this method
-   * allocates a new array). The caller is thus free to modify the returned array.
-   *
-   * @return An array containing all of the elements in this set in ascending order.
-   * @complexity O(n)
-   */
-  public Object[] toArray() {
-    final Node root = getRoot();
-    if (root == null)
-      return ArrayUtil.EMPTY_ARRAY;
+  private static void toString(final StringBuilder b, final BinaryTree<?>.Node n) {
+    if (n == null)
+      return;
 
-    final int size = size();
-    final Object[] a = new Object[size];
-    toArray(root, a, 0);
-    return a;
+    toString(b, n.getLeft());
+    b.append(',').append(n.getData());
+    toString(b, n.getRight());
   }
 
   /**
-   * Returns an array containing all of the elements in this set in ascending order; the runtime type of the returned array is that
-   * of the specified array. If the set fits in the specified array, it is returned therein. Otherwise, a new array is allocated
-   * with the runtime type of the specified array and the size of this set.
-   * <p>
-   * If this set fits in the specified array with room to spare (i.e., the array has more elements than this set), the element in
-   * the array immediately following the end of the set is set to {@code null}.
-   * <p>
-   * The returned array will be "safe" in that no references to it are maintained by this set. (In other words, this method
-   * allocates a new array). The caller is thus free to modify the returned array.
-   *
-   * @param <E> The component type of the array to contain the set.
-   * @param a The array into which the elements of this set are to be stored, if it is big enough; otherwise, a new array of the
-   *          same runtime type is allocated for this purpose.
-   * @return An array containing all of the elements in this set.
-   * @throws ArrayStoreException If the runtime type of any element in this set is not assignable to the
-   *           {@linkplain Class#getComponentType runtime component type} of the specified array.
-   * @throws NullPointerException If the specified array is null.
-   * @complexity O(n)
+   * The number of times this {@link IntervalTreeSet} has been structurally modified. Structural modifications are those that change
+   * the number of mappings in the {@link IntervalTreeSet} or otherwise modify its internal structure (e.g., rotate). This field is
+   * used to make iterators on Collection-views of the {@link IntervalTreeSet} fail-fast. (See {@link ConcurrentModificationException}).
    */
-  @SuppressWarnings("unchecked")
-  public <E>E[] toArray(E[] a) {
-    final Node root = getRoot();
-    if (root == null) {
-      if (a.length > 0)
-        a[0] = null;
+  protected transient int modCount;
+  private Node root;
 
-      return a;
-    }
-
-    final int size = size();
-    if (a.length < size)
-      a = (E[])Array.newInstance(a.getClass().getComponentType(), size);
-
-    toArray(root, a, 0);
-
-    if (a.length > size)
-      a[size] = null;
-
-    return a;
+  /**
+   * Removes all of the elements from this set (i.e. the set will be empty after this method returns).
+   *
+   * @complexity O(1)
+   */
+  public void clear() {
+    ++modCount;
+    setRoot(null);
   }
 
   /**
@@ -577,6 +491,10 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
     }
   }
 
+  protected boolean equals(final BinaryTree<?> tree) {
+    return Objects.equals(getRoot(), tree.getRoot());
+  }
+
   /**
    * {@inheritDoc}
    *
@@ -584,7 +502,11 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
    */
   @Override
   public boolean equals(final Object obj) {
-    return obj == this || obj instanceof BinaryTree && Objects.equals(root, ((BinaryTree<?>)obj).root);
+    return obj == this || obj instanceof BinaryTree && equals((BinaryTree<?>)obj);
+  }
+
+  protected Node getRoot() {
+    return root;
   }
 
   /**
@@ -594,16 +516,144 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
    */
   @Override
   public int hashCode() {
-    return root == null ? 0 : root.hashCode();
+    final Node root = getRoot();
+    return root == null ? 0 : hashCode(root);
   }
 
-  private static void toString(final StringBuilder b, final BinaryTree<?>.Node n) {
-    if (n == null)
-      return;
+  protected int hashCode(final Node root) {
+    return root.hashCode();
+  }
 
-    toString(b, n.getLeft());
-    b.append(',').append(n.getData());
-    toString(b, n.getRight());
+  /**
+   * Returns {@code true} if this set has zero elements, otherwise {@code false}.
+   *
+   * @return {@code true} if this set has zero elements, otherwise {@code false}.
+   * @complexity O(1)
+   */
+  public boolean isEmpty() {
+    return getRoot() == null;
+  }
+
+  /**
+   * Returns an {@link Iterator} over the elements in this set in ascending order.
+   *
+   * @return An {@link Iterator} over the elements in this set in ascending order.
+   * @complexity O(1)
+   */
+  public Iterator<T> iterator() {
+    final Node root = getRoot();
+    return root == null ? Iterators.empty() : new BinaryTreeIterator(root) {
+      private int modCount = BinaryTree.this.modCount;
+
+      @Override
+      public T next() {
+        final T next = super.next();
+        if (modCount != BinaryTree.this.modCount)
+          throw new ConcurrentModificationException();
+
+        return next;
+      }
+
+      @Override
+      public void remove() {
+        ++modCount;
+        super.remove();
+        ++BinaryTree.this.modCount;
+      }
+    };
+  }
+
+  /**
+   * Returns a new instance of this class's specific {@link Node} subclass with the provided key.
+   *
+   * @param key The key.
+   * @return A new instance of this class's specific {@link Node} subclass with the provided key.
+   * @complexity O(1)
+   */
+  protected Node newNode(final T key) {
+    return new Node(key);
+  }
+
+  protected void setRoot(final Node root) {
+    this.root = root;
+  }
+
+  /**
+   * Returns the number of elements in this set.
+   *
+   * @return The number of elements in this set.
+   * @complexity O(1)
+   */
+  public int size() {
+    final Node root = getRoot();
+    return root != null ? root.getSize() : 0;
+  }
+
+  /**
+   * Returns an array containing all of the elements in this set in ascending order. The returned array's
+   * {@linkplain Class#getComponentType runtime component type} is {@code Object}.
+   * <p>
+   * The returned array will be "safe" in that no references to it are maintained by this set. (In other words, this method
+   * allocates a new array). The caller is thus free to modify the returned array.
+   *
+   * @return An array containing all of the elements in this set in ascending order.
+   * @complexity O(n)
+   */
+  public Object[] toArray() {
+    final Node root = getRoot();
+    return root != null ? toArray(root) : ArrayUtil.EMPTY_ARRAY;
+  }
+
+  /**
+   * Returns an array containing all of the elements in this set in ascending order; the runtime type of the returned array is that
+   * of the specified array. If the set fits in the specified array, it is returned therein. Otherwise, a new array is allocated
+   * with the runtime type of the specified array and the size of this set.
+   * <p>
+   * If this set fits in the specified array with room to spare (i.e., the array has more elements than this set), the element in
+   * the array immediately following the end of the set is set to {@code null}.
+   * <p>
+   * The returned array will be "safe" in that no references to it are maintained by this set. (In other words, this method
+   * allocates a new array). The caller is thus free to modify the returned array.
+   *
+   * @param <E> The component type of the array to contain the set.
+   * @param a The array into which the elements of this set are to be stored, if it is big enough; otherwise, a new array of the
+   *          same runtime type is allocated for this purpose.
+   * @return An array containing all of the elements in this set.
+   * @throws ArrayStoreException If the runtime type of any element in this set is not assignable to the
+   *           {@linkplain Class#getComponentType runtime component type} of the specified array.
+   * @throws NullPointerException If the specified array is null.
+   * @complexity O(n)
+   */
+  public <E>E[] toArray(E[] a) {
+    final Node root = getRoot();
+    if (root != null)
+      return toArray(root, a);
+
+    if (a.length > 0)
+      a[0] = null;
+
+    return a;
+  }
+
+  protected Object[] toArray(final Node node) {
+    final int size = size();
+    final Object[] a = new Object[size];
+    toArray(node, a, 0);
+    return a;
+  }
+
+  @SuppressWarnings("unchecked")
+  protected <E>E[] toArray(final Node node, E[] a) {
+    final int size = size();
+    if (a.length < size)
+      a = (E[])Array.newInstance(a.getClass().getComponentType(), size);
+
+    toArray(node, a, 0);
+
+    if (a.length > size)
+      a[size] = null;
+
+    return a;
   }
 
   /**
@@ -612,15 +662,16 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
    * @complexity O(n)
    */
   @Override
-  public final String toString() {
+  public String toString() {
     final Node root = getRoot();
-    if (root == null)
-      return "[]";
+    return root == null ? "[]" : toString(root).toString();
+  }
 
+  protected StringBuilder toString(final Node root) {
     final StringBuilder b = new StringBuilder();
     toString(b, root);
     b.setCharAt(0, '[');
     b.append(']');
-    return b.toString();
+    return b;
   }
 }

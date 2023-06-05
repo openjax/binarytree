@@ -18,10 +18,14 @@ package org.openjax.binarytree;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.NavigableSet;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.SortedSet;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import org.libj.util.Interval;
 
@@ -47,16 +51,15 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
     }
 
     @Override
-    protected IntervalNode getMinNode() {
-      return minNode;
+    protected IntervalNode clone(final BinaryTree<Interval<T>> tree) {
+      final IntervalNode clone = (IntervalNode)super.clone(tree);
+      clone.updateMinMax();
+      return clone;
     }
 
-    protected T getMinNodeMin() {
-      return getMinNode().getData().getMin();
-    }
-
-    protected void setMinNode(final IntervalNode minNode) {
-      this.minNode = minNode;
+    @Override
+    protected IntervalNode getLeft() {
+      return (IntervalNode)super.getLeft();
     }
 
     @Override
@@ -68,20 +71,28 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
       return getMaxNode().getData().getMax();
     }
 
-    protected void setMaxNode(final IntervalNode maxNode) {
-      this.maxNode = maxNode;
+    @Override
+    protected IntervalNode getMinNode() {
+      return minNode;
     }
 
-    protected IntervalNode lower() {
-      final IntervalNode left = getLeft();
-      if (left != null)
-        return left.getMaxNode();
+    protected T getMinNodeMin() {
+      return getMinNode().getData().getMin();
+    }
 
-      IntervalNode node = this, next = node;
-      while ((next = next.getParent()) != null && next.getRight() != node)
-        node = next;
+    @Override
+    protected IntervalNode getParent() {
+      return (IntervalNode)super.getParent();
+    }
 
-      return next;
+    @Override
+    protected IntervalNode getRight() {
+      return (IntervalNode)super.getRight();
+    }
+
+    @Override
+    protected String getText() {
+      return super.getText() + " <" + getMinNodeMin() + "|" + getMaxNodeMax() + ">";
     }
 
     protected IntervalNode higher() {
@@ -96,14 +107,16 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
       return next;
     }
 
-    @Override
-    protected void setData(final Interval<T> data) {
-      super.setData(data);
-      if (getLeft() == null)
-        setMinNode(this);
+    protected IntervalNode lower() {
+      final IntervalNode left = getLeft();
+      if (left != null)
+        return left.getMaxNode();
 
-      if (getRight() == null)
-        setMaxNode(this);
+      IntervalNode node = this, next = node;
+      while ((next = next.getParent()) != null && next.getRight() != node)
+        node = next;
+
+      return next;
     }
 
     @Override
@@ -133,8 +146,31 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
     }
 
     @Override
-    protected IntervalNode getParent() {
-      return (IntervalNode)super.getParent();
+    protected void setData(final Interval<T> data) {
+      super.setData(data);
+      if (getLeft() == null)
+        setMinNode(this);
+
+      if (getRight() == null)
+        setMaxNode(this);
+    }
+
+    @Override
+    protected IntervalNode setLeft(final Node node) {
+      return (IntervalNode)super.setLeft(node);
+    }
+
+    protected void setMaxNode(final IntervalNode maxNode) {
+      this.maxNode = maxNode;
+    }
+
+    protected void setMinNode(final IntervalNode minNode) {
+      this.minNode = minNode;
+    }
+
+    @Override
+    protected IntervalNode setRight(final Node node) {
+      return (IntervalNode)super.setRight(node);
     }
 
     @Override
@@ -144,29 +180,9 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
     }
 
     @Override
-    protected IntervalNode setLeft(final Node node) {
-      return (IntervalNode)super.setLeft(node);
-    }
-
-    @Override
-    protected IntervalNode getLeft() {
-      return (IntervalNode)super.getLeft();
-    }
-
-    @Override
     protected Node superSetRight(final Node node) {
       this.setMaxNode(node != null ? ((IntervalNode)node).getMaxNode() : this);
       return super.superSetRight(node);
-    }
-
-    @Override
-    protected IntervalNode setRight(final Node node) {
-      return (IntervalNode)super.setRight(node);
-    }
-
-    @Override
-    protected IntervalNode getRight() {
-      return (IntervalNode)super.getRight();
     }
 
     private void updateMinMax() {
@@ -181,22 +197,16 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
       updateMinMax();
       super.updateNode();
     }
-
-    @Override
-    protected String getText() {
-      return super.getText() + " <" + getMinNodeMin() + "|" + getMaxNodeMax() + ">";
-    }
-
-    @Override
-    protected IntervalNode clone(final BinaryTree<Interval<T>> tree) {
-      final IntervalNode clone = (IntervalNode)super.clone(tree);
-      clone.updateMinMax();
-      return clone;
-    }
   }
 
   @SuppressWarnings("rawtypes")
   private static final Interval[] emptyIntervals = {};
+
+  /**
+   * Creates a new {@link IntervalTreeSet} that is empty.
+   */
+  public IntervalTreeSet() {
+  }
 
   /**
    * Creates a new {@link IntervalTreeSet} and calls {@link #add(Interval)} on each member of the provided {@link Collection}.
@@ -235,91 +245,6 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
   }
 
   /**
-   * Creates a new {@link IntervalTreeSet} that is empty.
-   */
-  public IntervalTreeSet() {
-  }
-
-  @Override
-  protected IntervalNode getRoot() {
-    return (IntervalNode)super.getRoot();
-  }
-
-  @Override
-  protected IntervalNode newNode(final Interval<T> key) {
-    return new IntervalNode(key);
-  }
-
-  /**
-   * Returns {@code true} if this set changed in lieu of the addition of the members of the provided array of {@link Interval}s,
-   * otherwise {@code false}.
-   *
-   * @param a An array of {@link Interval}s to add.
-   * @return {@code true} if this set changed due to the addition of the members of the provided array of {@link Interval}s,
-   *         otherwise {@code false}.
-   * @throws NullPointerException If the provided array, or any member of the provided array is null.
-   * @implNote {@link Interval} values that intersect are automatically merged.
-   * @complexity O(log(n) * m)
-   */
-  @SuppressWarnings("unchecked")
-  public boolean addAll(final Interval<T> ... a) {
-    return addAll(a, 0, a.length);
-  }
-
-  /**
-   * Returns {@code true} if this set changed in lieu of the addition of the members of the provided array of {@link Interval}s
-   * between the specified {@code fromIndex} and {@code toIndex} values, otherwise {@code false}.
-   *
-   * @param a The array of {@link Interval}s to {@linkplain #add(Interval) add}.
-   * @param fromIndex The index of the first {@link Interval} (inclusive) to be added.
-   * @param toIndex The index of the last {@link Interval} (exclusive) to be added.
-   * @return {@code true} if this set changed in lieu of the addition of the members of the provided array of {@link Interval}s
-   *         between the specified {@code fromIndex} and {@code toIndex} values, otherwise {@code false}.
-   * @throws ArrayIndexOutOfBoundsException If the a value between {@code fromIndex} (inclusive) to {@code toIndex} (exclusive) is
-   *           greater than the length of the provided array.
-   * @throws NullPointerException If the provided array, or any member of the provided array is null.
-   * @implNote {@link Interval} values that intersect are automatically merged.
-   * @complexity O(log(n) * m)
-   */
-  public boolean addAll(final Interval<T>[] a, int fromIndex, final int toIndex) {
-    while (fromIndex < toIndex) // [A]
-      add(a[fromIndex++]);
-
-    return changed;
-  }
-
-  private boolean addAll(final BinaryTree<? extends Interval<T>>.Node n) {
-    if (n == null)
-      return false;
-
-    boolean changed = false;
-    changed |= addAll(n.getLeft());
-    changed |= add(n.getData());
-    changed |= addAll(n.getRight());
-    return changed;
-  }
-
-  /**
-   * Returns {@code true} if this set changed in lieu of the addition of the members of the provided {@link Collection} of
-   * {@link Interval}s, otherwise {@code false}.
-   *
-   * @param c A of {@link Interval}s to add.
-   * @return {@code true} if this set changed due to the addition of the members of the provided provided {@link Collection} of
-   *         {@link Interval}s, otherwise {@code false}.
-   * @throws NullPointerException If the provided array, or any member of the provided array is null.
-   * @implNote {@link Interval} values that intersect are automatically merged.
-   * @complexity O(log(n) * m)
-   */
-  @Override
-  @SuppressWarnings("unchecked")
-  public boolean addAll(final Collection<? extends Interval<T>> c) {
-    if (c instanceof BinaryTree)
-      return addAll(((BinaryTree<? extends Interval<T>>)c).getRoot());
-
-    return super.addAll(c);
-  }
-
-  /**
    * Returns {@code true} if this set changed in lieu of the addition of the provided {@link Interval}, otherwise {@code false}.
    *
    * @param key The {@link Interval}s to add.
@@ -330,30 +255,12 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
    */
   @Override
   public boolean add(final Interval<T> key) {
-    final IntervalNode root = getRoot();
-    if (key.getMin() == null && key.getMax() == null) {
-      if (root == null) {
-        setRoot(add(key, newNode(key)));
-        return true;
-      }
-
-      final Interval<T> data = root.getData();
-      if (data.getMin() == null && data.getMax() == null)
-        return false;
-
-      root.setData(key);
-      root.setLeft(null);
-      root.setRight(null);
-      return true;
-    }
-
-    changed = false;
-    setRoot(add(key, root));
-    return changed;
+    return addFast(key);
   }
 
   private IntervalNode add(final Interval<T> key, final IntervalNode node) {
     if (node == null) {
+      ++modCount;
       changed = true;
       return newNode(key);
     }
@@ -502,161 +409,84 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
     return node.setRight(mergeRight(key, node));
   }
 
-  private IntervalNode mergeLeft(final Interval<T> key, final IntervalNode node) {
-    final T keyMin = key.getMin();
-    final IntervalNode left = mergeLeft(key, keyMin, node, node.getLeft());
-    final IntervalNode right = node.getRight();
-    if (right != null) {
-      right.updateHeight();
-      node.superSetRight(right.rebalance());
-    }
-
-    return left;
-  }
-
-  private IntervalNode mergeRight(final Interval<T> key, final IntervalNode node) {
-    final T keyMax = key.getMax();
-    return mergeRight(key, keyMax, node.getData().getMin(), node, node.getRight());
-  }
-
-  /**        __________
-   *         |  root  |
-   *         ----------
-   * ___________
-   * |   key   |
-   * -----------
+  /**
+   * Returns {@code true} if this set changed in lieu of the addition of the members of the provided {@link Collection} of
+   * {@link Interval}s, otherwise {@code false}.
+   *
+   * @param c A of {@link Interval}s to add.
+   * @return {@code true} if this set changed due to the addition of the members of the provided provided {@link Collection} of
+   *         {@link Interval}s, otherwise {@code false}.
+   * @throws NullPointerException If the provided array, or any member of the provided array is null.
+   * @implNote {@link Interval} values that intersect are automatically merged.
+   * @complexity O(log(n) * m)
    */
-  private IntervalNode mergeLeft(final Interval<T> key, final T keyMin, final IntervalNode node, final IntervalNode child) {
-    if (child == null) {
-      final Interval<T> nodeData = node.getData();
-      final T nodeMax = nodeData.getMax();
-      final T keyMax = key.getMax();
-      final boolean updateMax = keyMax == null ? nodeMax != null : key.compare(keyMax, nodeMax) > 0;
-      if (updateMax) {
-        node.superSetRight(mergeRight(key, keyMax, keyMin, node, node.getRight()));
-//        if (nodeData == node.getData()) { // Seems to not be needed, because it's guaranteed that `mergeRight` will call `node.setData()`.
-//          node.setData(key.newInstance(keyMin, nodeMax));
-//          changed = true;
-//        }
-      }
-      else {
-        node.setData(key.newInstance(keyMin, nodeMax));
-        changed = true;
-      }
-
-      return null;
-    }
-
-    final Interval<T> childData = child.getData();
-
-    /**      ___________
-     *       |  child  |
-     *       -----------
-     *    ___________
-     *    |   key   |
-     *    -----------
-     *    |
-     *  keyMin
-     */
-    final T childMin = childData.getMin();
-    if (keyMin == null || childMin != null && key.compare(keyMin, childMin) <= 0) {
-//      node.setMinNode(node); // FIXME: Is this needed?
-      // Skip the child, and merge to its left
-      changed = true;
-      return mergeLeft(key, keyMin, node, child.getLeft());
-    }
-
-    /**  ___________
-     *   |  child  |
-     *   -----------
-     *                ___________
-     *                |   key   |
-     *                -----------
-     *                |
-     *              keyMin
-     */
-    if (key.compare(keyMin, childData.getMax()) > 0) {
-      // Keep the `child`, and merge to its right
-      return child.setRight(mergeLeft(key, keyMin, node, child.getRight()));
-    }
-
-    final Interval<T> data = node.getData();
-    final T dataMax = data.getMax();
-    final T keyMax = key.getMax();
-    final boolean updateMax = keyMax == null ? dataMax != null : key.compare(keyMax, dataMax) > 0;
-    if (updateMax) {
-      final boolean updateMin = childMin == null || key.compare(childMin, data.getMin()) < 0;
-      node.superSetRight(mergeRight(key, keyMax, updateMin ? childMin : keyMin, node, node.getRight()));
-//      if (nodeData == node.getData() && updateMin) { // Seems to not be needed, because it's guaranteed that `mergeRight` will call `node.setData()`.
-//        node.setData(key.newInstance(childMin, nodeMax));
-//        changed = true;
-//      }
-    }
-    else { /* if (key.compare(childMin, nodeData.getMin()) < 0) { */ // Not needed, because mergeLeft is called for c = -1, which guarantees this exact condition.
-      node.setData(key.newInstance(childMin, dataMax));
-      changed = true;
-    }
-
-    return child.getLeft();
+  @Override
+  public boolean addAll(final Collection<? extends Interval<T>> c) {
+    return super.addAll(c);
   }
 
-  /** __________
-   *  |  root  |
-   *  ----------
-   *        ___________
-   *        |   key   |
-   *        -----------
+  /**
+   * Returns {@code true} if this set changed in lieu of the addition of the members of the provided array of {@link Interval}s,
+   * otherwise {@code false}.
+   *
+   * @param a An array of {@link Interval}s to add.
+   * @return {@code true} if this set changed due to the addition of the members of the provided array of {@link Interval}s,
+   *         otherwise {@code false}.
+   * @throws NullPointerException If the provided array, or any member of the provided array is null.
+   * @implNote {@link Interval} values that intersect are automatically merged.
+   * @complexity O(log(n) * m)
    */
-  private IntervalNode mergeRight(final Interval<T> key, T keyMax, final T dataMin, final IntervalNode node, final IntervalNode child) {
-    if (child == null) {
-      final T dataMax = node.getData().getMax();
-      if (dataMax != null && (keyMax == null || key.compare(keyMax, dataMax) > 0)) {
-        node.setData(key.newInstance(dataMin, keyMax));
-        changed = true;
+  @SuppressWarnings("unchecked")
+  public boolean addAll(final Interval<T> ... a) {
+    return addAll(a, 0, a.length);
+  }
+
+  /**
+   * Returns {@code true} if this set changed in lieu of the addition of the members of the provided array of {@link Interval}s
+   * between the specified {@code fromIndex} and {@code toIndex} values, otherwise {@code false}.
+   *
+   * @param a The array of {@link Interval}s to {@linkplain #add(Interval) add}.
+   * @param fromIndex The index of the first {@link Interval} (inclusive) to be added.
+   * @param toIndex The index of the last {@link Interval} (exclusive) to be added.
+   * @return {@code true} if this set changed in lieu of the addition of the members of the provided array of {@link Interval}s
+   *         between the specified {@code fromIndex} and {@code toIndex} values, otherwise {@code false}.
+   * @throws ArrayIndexOutOfBoundsException If the a value between {@code fromIndex} (inclusive) to {@code toIndex} (exclusive) is
+   *           greater than the length of the provided array.
+   * @throws NullPointerException If the provided array, or any member of the provided array is null.
+   * @implNote {@link Interval} values that intersect are automatically merged.
+   * @complexity O(log(n) * m)
+   */
+  public boolean addAll(final Interval<T>[] a, int fromIndex, final int toIndex) {
+    while (fromIndex < toIndex) // [A]
+      addFast(a[fromIndex++]);
+
+    return changed;
+  }
+
+  @Override
+  protected boolean addFast(final Interval<T> key) {
+    final IntervalNode root = getRoot();
+    if (key.getMin() == null && key.getMax() == null) {
+      if (root == null) {
+        setRoot(add(key, newNode(key)));
+        ++modCount;
+        return true;
       }
 
-      return null;
+      final Interval<T> data = root.getData();
+      if (data.getMin() == null && data.getMax() == null)
+        return false;
+
+      root.setData(key);
+      root.setLeft(null);
+      root.setRight(null);
+      ++modCount;
+      return true;
     }
 
-    /**  ___________
-     *   |  child  |
-     *   -----------
-     *      ___________
-     *      |   key   |
-     *      -----------
-     *                |
-     *              keyMax
-     */
-    final Interval<T> data = child.getData();
-    final T dataMax;
-    if (keyMax == null || (dataMax = data.getMax()) != null && key.compare(keyMax, dataMax) > 0) {
-      // Skip the child, and merge to its right
-      changed = true;
-      return mergeRight(key, keyMax, dataMin, node, child.getRight());
-    }
-
-    /**             ___________
-     *              |  child  |
-     *              -----------
-     * ___________
-     * |   key   |
-     * -----------
-     *           |
-     *         keyMax
-     */
-    if (key.compare(keyMax, data.getMin()) < 0) {
-      // Keep the `child`, and merge to its left
-      return child.setLeft(mergeRight(key, keyMax, dataMin, node, child.getLeft()));
-    }
-
-    keyMax = dataMax;
-
-    { /* if (key.compare(keyMax, data.getMax()) > 0) { */ // Not needed, because mergeRight is called for c = 1, which guarantees this exact condition.
-      node.setData(key.newInstance(dataMin, keyMax));
-      changed = true;
-    }
-
-    return child.getRight();
+    changed = false;
+    setRoot(add(key, root));
+    return changed;
   }
 
   /**
@@ -666,21 +496,97 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
    * @complexity O(log(n))
    */
   @Override
-  public boolean remove(final Interval<T> key) {
-    final IntervalNode root = getRoot();
-    if (root == null || !key.intersects(root.getMinNodeMin(), root.getMaxNodeMax()))
-      return false;
-
-    changed = false;
-    final IntervalNode newRoot = deleteNodeUnsafe(key, root);
-    if (newRoot != root) {
-      if (newRoot != null)
-        newRoot.setParent(null);
-
-      setRoot(newRoot);
+  public Interval<T> ceiling(final Interval<T> e) {
+    final T min = e.getMin();
+    IntervalNode ceiling = null;
+    Interval<T> data;
+    IntervalNode node = getRoot();
+    for (int c; node != null; node = c < 0 ? (ceiling = node).getLeft() : node.getRight()) { // [X]
+      data = node.getData();
+      c = e.compare(min, data.getMin());
+      if (c == 0)
+        return data;
     }
 
-    return changed;
+    return ceiling == null ? null : ceiling.getData();
+  }
+
+  @Override
+  public IntervalTreeSet<T> clone() {
+    return (IntervalTreeSet<T>)super.clone();
+  }
+
+  @Override
+  public Comparator<? super Interval<T>> comparator() {
+    return Interval.COMPARATOR;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * @throws NullPointerException If the provided {@link Interval} is null.
+   * @complexity O(log(n))
+   */
+  @Override
+  public boolean contains(final Interval<T> key) {
+    return containsFast(key);
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * @throws NullPointerException If the provided key is null.
+   * @complexity O(log(n))
+   */
+  @Override
+  @SuppressWarnings("unchecked")
+  public boolean contains(final Object o) {
+    return o instanceof Interval ? containsFast((Interval<T>)o) : containsFast(o);
+  }
+
+  private boolean contains(final T key, final IntervalNode node) {
+    final Interval<T> data = node.getData();
+    return data.compare(key, data.getMin()) < 0 ? containsLeft(key, node.getLeft()) : data.compare(key, data.getMax()) > 0 ? containsRight(key, node.getRight()) : true;
+  }
+
+  @Override
+  protected boolean containsFast(final Interval<T> key) {
+    final Node node = searchNode(key);
+    if (node == null)
+      return false;
+
+    final T keyMax = key.getMax();
+    final T dataMax = node.getData().getMax();
+    return keyMax == null ? dataMax == null : dataMax == null || key.compare(keyMax, dataMax) <= 0;
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  protected boolean containsFast(final Object o) {
+    final IntervalNode root = getRoot();
+    if (root == null)
+      return false;
+
+    final T key = (T)o;
+    final Interval<T> minNode = root.getMinNode().getData();
+    final Interval<T> maxNode = root.getMaxNode().getData();
+    return (minNode == null || minNode.compare(key, minNode.getMin()) >= 0) && (maxNode == null || maxNode.compare(key, maxNode.getMax()) < 0) && contains(key, root);
+  }
+
+  private boolean containsLeft(final T key, final IntervalNode node) {
+    if (node == null)
+      return false;
+
+    final Interval<T> maxNode = node.getMaxNode().getData();
+    return maxNode.compare(key, maxNode.getMax()) < 0 && contains(key, node);
+  }
+
+  private boolean containsRight(final T key, final IntervalNode node) {
+    if (node == null)
+      return false;
+
+    final Interval<T> minNode = node.getMinNode().getData();
+    return minNode.compare(key, minNode.getMin()) >= 0 && contains(key, node);
   }
 
   private IntervalNode deleteNodeLeft(final Interval<T> key, final IntervalNode node) {
@@ -714,6 +620,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
         return deleteNodeRight(key, node);
 
       if (dataMin == null || key.compare(keyMin, dataMin) > 0) { // If key intersects node on the right of node.min
+        ++modCount;
         changed = true;
         node.setData(key.newInstance(dataMin, keyMin));
         if (keyMax != null && (dataMax == null || key.compare(keyMax, dataMax) < 0)) // Split into two
@@ -730,12 +637,14 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
       // If key intersects node on the left of node.min
 
       if (dataMax == null || key.compare(keyMax, dataMax) < 0) { // If key partially intersects node on the left
+        ++modCount;
         changed = true;
         node.setData(key.newInstance(keyMax, dataMax));
         return deleteNodeLeft(key, node);
       }
     }
 
+    ++modCount;
     changed = true;
 
     // Otherwise, key intersects node entirely, so return its child(ren)
@@ -753,6 +662,18 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
 
     // Recurse back onto node, because the data was replaced by successor's (the right bound of which has not yet been checked)
     return deleteNodeUnsafe(key, node.setRight(deleteNodeUnsafe(inOrderSuccessorData, right)));
+  }
+
+  @Override
+  public Iterator<Interval<T>> descendingIterator() {
+    // FIXME: Implement this.
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public NavigableSet<Interval<T>> descendingSet() {
+    // FIXME: Implement this.
+    throw new UnsupportedOperationException();
   }
 
   /**
@@ -824,13 +745,6 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
   }
 
   @SuppressWarnings("unchecked")
-  private Interval<T>[] newDiffArray(final Interval<T> key, final T min, final T max, final int depth) {
-    final Interval<T>[] diff = new Interval[depth + 1];
-    diff[depth] = key.newInstance(min, max);
-    return diff;
-  }
-
-  @SuppressWarnings("unchecked")
   private Interval<T>[] difference(Node node, final Interval<T> key, final T min, final T max, final int depth) {
     final Node right = node.getRight();
     if (right != null) {
@@ -860,41 +774,15 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
   /**
    * {@inheritDoc}
    *
-   * @throws NullPointerException If the provided key is null.
-   * @complexity O(log(n))
+   * @complexity O(1)
    */
   @Override
-  @SuppressWarnings("unchecked")
-  public boolean contains(final Object o) {
+  public Interval<T> first() {
     final IntervalNode root = getRoot();
     if (root == null)
-      return false;
+      throw new NoSuchElementException();
 
-    final T key = (T)o;
-    final Interval<T> minNode = root.getMinNode().getData();
-    final Interval<T> maxNode = root.getMaxNode().getData();
-    return (minNode == null || minNode.compare(key, minNode.getMin()) >= 0) && (maxNode == null || maxNode.compare(key, maxNode.getMax()) < 0) && contains(key, root);
-  }
-
-  private boolean containsLeft(final T key, final IntervalNode node) {
-    if (node == null)
-      return false;
-
-    final Interval<T> maxNode = node.getMaxNode().getData();
-    return maxNode.compare(key, maxNode.getMax()) < 0 && contains(key, node);
-  }
-
-  private boolean containsRight(final T key, final IntervalNode node) {
-    if (node == null)
-      return false;
-
-    final Interval<T> minNode = node.getMinNode().getData();
-    return minNode.compare(key, minNode.getMin()) >= 0 && contains(key, node);
-  }
-
-  private boolean contains(final T key, final IntervalNode node) {
-    final Interval<T> data = node.getData();
-    return data.compare(key, data.getMin()) < 0 ? containsLeft(key, node.getLeft()) : data.compare(key, data.getMax()) > 0 ? containsRight(key, node.getRight()) : true;
+    return root.getMinNode().getData();
   }
 
   /**
@@ -904,51 +792,68 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
    * @complexity O(log(n))
    */
   @Override
-  public boolean contains(final Interval<T> key) {
-    final Node node = searchNode(key);
-    if (node == null)
-      return false;
+  public Interval<T> floor(final Interval<T> e) {
+    final T min = e.getMin();
+    IntervalNode floor = null;
+    Interval<T> data;
+    IntervalNode node = getRoot();
+    for (int c; node != null; node = c < 0 ? node.getLeft() : (floor = node).getRight()) { // [X]
+      data = node.getData();
+      c = e.compare(min, data.getMin());
+      if (c == 0)
+        return data;
+    }
 
-    final T keyMax = key.getMax();
-    final T dataMax = node.getData().getMax();
-    return keyMax == null ? dataMax == null : dataMax == null || key.compare(keyMax, dataMax) <= 0;
+    return floor == null ? null : floor.getData();
   }
 
   @Override
-  protected Node searchNode(final Interval<T> key) {
+  public void forEach(final Consumer<? super Interval<T>> action) {
     final IntervalNode root = getRoot();
     if (root == null)
-      return null;
+      return;
 
-    final T keyMin = key.getMin();
-    if (keyMin == null) {
-      final IntervalNode minNode = root.getMinNode();
-      return minNode.getData().getMin() == null ? minNode : null;
-    }
+    final int mc = modCount;
+    final BinaryTreeIterator i = new BinaryTreeIterator(root);
+    while (i.hasNext())
+      action.accept(i.next());
 
-    final T minNodeMin = root.getMinNodeMin();
-    final T maxNodeMax = root.getMaxNodeMax();
-    if (minNodeMin != null && key.compare(keyMin, minNodeMin) < 0 || maxNodeMax != null && key.compare(keyMin, maxNodeMax) >= 0)
-      return null;
-
-    return searchNode(keyMin, root);
+    if (modCount != mc)
+      throw new ConcurrentModificationException();
   }
 
-  private Node searchNodeLeft(final T keyMin, final IntervalNode node) {
-    final Interval<T> data;
-    return node == null || (data = node.getMaxNode().getData()).compare(keyMin, data.getMax()) >= 0 ? null : searchNode(keyMin, node);
+  @Override
+  protected IntervalNode getRoot() {
+    return (IntervalNode)super.getRoot();
   }
 
-  private Node searchNodeRight(final T keyMin, final IntervalNode node) {
-    final Interval<T> data;
-    return node == null || (data = node.getMinNode().getData()).compare(keyMin, data.getMin()) < 0 ? null : searchNode(keyMin, node);
+  @Override
+  public SortedSet<Interval<T>> headSet(final Interval<T> toElement) {
+    // FIXME: Implement this.
+    throw new UnsupportedOperationException();
   }
 
-  private Node searchNode(final T keyMin, final IntervalNode node) {
-    final Interval<T> data = node.getData();
-    final T dataMin = data.getMin();
-    final T dataMax;
-    return dataMin != null && data.compare(keyMin, dataMin) < 0 ? searchNodeLeft(keyMin, node.getLeft()) : (dataMax = data.getMax()) != null && data.compare(keyMin, dataMax) >= 0 ? searchNodeRight(keyMin, node.getRight()) : node;
+  @Override
+  public NavigableSet<Interval<T>> headSet(final Interval<T> toElement, final boolean inclusive) {
+    // FIXME: Implement this.
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * @throws NullPointerException If the provided {@link Interval} is null.
+   * @complexity O(log(n))
+   */
+  @Override
+  public Interval<T> higher(final Interval<T> e) {
+    Node node = searchNode(e);
+    return node == null ? null : higher(node);
+  }
+
+  protected Interval<T> higher(Node node) {
+    node = ((IntervalNode)node).higher();
+    return node == null ? null : node.getData();
   }
 
   /**
@@ -960,9 +865,17 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
   @Override
   public boolean intersects(final Interval<T> key) {
     final IntervalNode root = getRoot();
-    if (root == null)
-      return false;
+    return root != null && intersects(root, key);
+  }
 
+  private boolean intersects(final Interval<T> key, final IntervalNode node) {
+    final Interval<T> data = node.getData();
+    final T dataMin = data.getMin();
+    final T dataMax;
+    return dataMin != null && key.compare(key.getMax(), dataMin) <= 0 ? intersectsLeft(key, node.getLeft()) : (dataMax = data.getMax()) != null && key.compare(key.getMin(), dataMax) >= 0 ? intersectsRight(key, node.getRight()) : key.intersects(data);
+  }
+
+  protected boolean intersects(final IntervalNode root, final Interval<T> key) {
     final T keyMin = key.getMin();
     final T keyMax = key.getMax();
     if (keyMin == null) {
@@ -991,32 +904,6 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
     return node != null && key.compare(key.getMax(), node.getMinNodeMin()) > 0 && intersects(key, node);
   }
 
-  private boolean intersects(final Interval<T> key, final IntervalNode node) {
-    final Interval<T> data = node.getData();
-    final T dataMin = data.getMin();
-    final T dataMax;
-    return dataMin != null && key.compare(key.getMax(), dataMin) <= 0 ? intersectsLeft(key, node.getLeft()) : (dataMax = data.getMax()) != null && key.compare(key.getMin(), dataMax) >= 0 ? intersectsRight(key, node.getRight()) : key.intersects(data);
-  }
-
-  @Override
-  public Comparator<? super Interval<T>> comparator() {
-    return Interval.COMPARATOR;
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * @complexity O(1)
-   */
-  @Override
-  public Interval<T> first() {
-    final IntervalNode root = getRoot();
-    if (root == null)
-      throw new NoSuchElementException();
-
-    return root.getMinNode().getData();
-  }
-
   /**
    * {@inheritDoc}
    *
@@ -1039,72 +926,190 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
    */
   @Override
   public Interval<T> lower(final Interval<T> e) {
-    Node node = searchNode(e);
-    if (node == null)
-      return null;
+    final Node node = searchNode(e);
+    return node == null ? null : lower(node);
+  }
 
+  protected Interval<T> lower(Node node) {
     node = ((IntervalNode)node).lower();
     return node == null ? null : node.getData();
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @throws NullPointerException If the provided {@link Interval} is null.
-   * @complexity O(log(n))
+  private IntervalNode mergeLeft(final Interval<T> key, final IntervalNode node) {
+    final T keyMin = key.getMin();
+    final IntervalNode left = mergeLeft(key, keyMin, node, node.getLeft());
+    final IntervalNode right = node.getRight();
+    if (right != null) {
+      right.updateHeight();
+      node.superSetRight(right.rebalance());
+    }
+
+    return left;
+  }
+
+  /**        __________
+   *         |  root  |
+   *         ----------
+   * ___________
+   * |   key   |
+   * -----------
    */
-  @Override
-  public Interval<T> higher(final Interval<T> e) {
-    Node node = searchNode(e);
-    if (node == null)
+  private IntervalNode mergeLeft(final Interval<T> key, final T keyMin, final IntervalNode node, final IntervalNode child) {
+    if (child == null) {
+      final Interval<T> nodeData = node.getData();
+      final T nodeMax = nodeData.getMax();
+      final T keyMax = key.getMax();
+      final boolean updateMax = keyMax == null ? nodeMax != null : key.compare(keyMax, nodeMax) > 0;
+      if (updateMax) {
+        node.superSetRight(mergeRight(key, keyMax, keyMin, node, node.getRight()));
+//        if (nodeData == node.getData()) { // Seems to not be needed, because it's guaranteed that `mergeRight` will call `node.setData()`.
+//          node.setData(key.newInstance(keyMin, nodeMax));
+//          ++modCount;
+//          changed = true;
+//        }
+      }
+      else {
+        node.setData(key.newInstance(keyMin, nodeMax));
+        ++modCount;
+        changed = true;
+      }
+
       return null;
-
-    node = ((IntervalNode)node).higher();
-    return node == null ? null : node.getData();
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * @throws NullPointerException If the provided {@link Interval} is null.
-   * @complexity O(log(n))
-   */
-  @Override
-  public Interval<T> floor(final Interval<T> e) {
-    final T min = e.getMin();
-    IntervalNode floor = null;
-    Interval<T> data;
-    int c;
-    for (IntervalNode node = getRoot(); node != null; node = c < 0 ? node.getLeft() : (floor = node).getRight()) { // [X]
-      data = node.getData();
-      c = e.compare(min, data.getMin());
-      if (c == 0)
-        return data;
     }
 
-    return floor == null ? null : floor.getData();
-  }
+    final Interval<T> childData = child.getData();
 
-  /**
-   * {@inheritDoc}
-   *
-   * @throws NullPointerException If the provided {@link Interval} is null.
-   * @complexity O(log(n))
-   */
-  @Override
-  public Interval<T> ceiling(final Interval<T> e) {
-    final T min = e.getMin();
-    IntervalNode ceiling = null;
-    Interval<T> data;
-    int c;
-    for (IntervalNode node = getRoot(); node != null; node = c < 0 ? (ceiling = node).getLeft() : node.getRight()) { // [X]
-      data = node.getData();
-      c = e.compare(min, data.getMin());
-      if (c == 0)
-        return data;
+    /**      ___________
+     *       |  child  |
+     *       -----------
+     *    ___________
+     *    |   key   |
+     *    -----------
+     *    |
+     *  keyMin
+     */
+    final T childMin = childData.getMin();
+    if (keyMin == null || childMin != null && key.compare(keyMin, childMin) <= 0) {
+//      node.setMinNode(node); // FIXME: Is this needed?
+      // Skip the child, and merge to its left
+      ++modCount;
+      changed = true;
+      return mergeLeft(key, keyMin, node, child.getLeft());
     }
 
-    return ceiling == null ? null : ceiling.getData();
+    /**  ___________
+     *   |  child  |
+     *   -----------
+     *                ___________
+     *                |   key   |
+     *                -----------
+     *                |
+     *              keyMin
+     */
+    if (key.compare(keyMin, childData.getMax()) > 0) {
+      // Keep the `child`, and merge to its right
+      return child.setRight(mergeLeft(key, keyMin, node, child.getRight()));
+    }
+
+    final Interval<T> data = node.getData();
+    final T dataMax = data.getMax();
+    final T keyMax = key.getMax();
+    final boolean updateMax = keyMax == null ? dataMax != null : key.compare(keyMax, dataMax) > 0;
+    if (updateMax) {
+      final boolean updateMin = childMin == null || key.compare(childMin, data.getMin()) < 0;
+      node.superSetRight(mergeRight(key, keyMax, updateMin ? childMin : keyMin, node, node.getRight()));
+//      if (nodeData == node.getData() && updateMin) { // Seems to not be needed, because it's guaranteed that `mergeRight` will call `node.setData()`.
+//        node.setData(key.newInstance(childMin, nodeMax));
+//        ++modCount;
+//        changed = true;
+//      }
+    }
+    else { /* if (key.compare(childMin, nodeData.getMin()) < 0) { */ // Not needed, because mergeLeft is called for c = -1, which guarantees this exact condition.
+      node.setData(key.newInstance(childMin, dataMax));
+      ++modCount;
+      changed = true;
+    }
+
+    return child.getLeft();
+  }
+
+  private IntervalNode mergeRight(final Interval<T> key, final IntervalNode node) {
+    final T keyMax = key.getMax();
+    return mergeRight(key, keyMax, node.getData().getMin(), node, node.getRight());
+  }
+
+  /** __________
+   *  |  root  |
+   *  ----------
+   *        ___________
+   *        |   key   |
+   *        -----------
+   */
+  private IntervalNode mergeRight(final Interval<T> key, T keyMax, final T dataMin, final IntervalNode node, final IntervalNode child) {
+    if (child == null) {
+      final T dataMax = node.getData().getMax();
+      if (dataMax != null && (keyMax == null || key.compare(keyMax, dataMax) > 0)) {
+        node.setData(key.newInstance(dataMin, keyMax));
+        ++modCount;
+        changed = true;
+      }
+
+      return null;
+    }
+
+    /**  ___________
+     *   |  child  |
+     *   -----------
+     *      ___________
+     *      |   key   |
+     *      -----------
+     *                |
+     *              keyMax
+     */
+    final Interval<T> data = child.getData();
+    final T dataMax;
+    if (keyMax == null || (dataMax = data.getMax()) != null && key.compare(keyMax, dataMax) > 0) {
+      // Skip the child, and merge to its right
+      ++modCount;
+      changed = true;
+      return mergeRight(key, keyMax, dataMin, node, child.getRight());
+    }
+
+    /**             ___________
+     *              |  child  |
+     *              -----------
+     * ___________
+     * |   key   |
+     * -----------
+     *           |
+     *         keyMax
+     */
+    if (key.compare(keyMax, data.getMin()) < 0) {
+      // Keep the `child`, and merge to its left
+      return child.setLeft(mergeRight(key, keyMax, dataMin, node, child.getLeft()));
+    }
+
+    keyMax = dataMax;
+
+    { /* if (key.compare(keyMax, data.getMax()) > 0) { */ // Not needed, because mergeRight is called for c = 1, which guarantees this exact condition.
+      node.setData(key.newInstance(dataMin, keyMax));
+      ++modCount;
+      changed = true;
+    }
+
+    return child.getRight();
+  }
+
+  @SuppressWarnings("unchecked")
+  private Interval<T>[] newDiffArray(final Interval<T> key, final T min, final T max, final int depth) {
+    final Interval<T>[] diff = new Interval[depth + 1];
+    diff[depth] = key.newInstance(min, max);
+    return diff;
+  }
+
+  @Override
+  protected IntervalNode newNode(final Interval<T> key) {
+    return new IntervalNode(key);
   }
 
   /**
@@ -1115,9 +1120,10 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
   @Override
   public Interval<T> pollFirst() {
     final IntervalNode root = getRoot();
-    if (root == null)
-      return null;
+    return root == null ? null : pollFirst(root);
+  }
 
+  protected Interval<T> pollFirst(final IntervalNode root) {
     final IntervalNode node = root.getMinNode();
     final Interval<T> data = node.getData();
     node.delete();
@@ -1132,25 +1138,109 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
   @Override
   public Interval<T> pollLast() {
     final IntervalNode root = getRoot();
-    if (root == null)
-      return null;
+    return root == null ? null : pollLast(root);
+  }
 
+  protected Interval<T> pollLast(final IntervalNode root) {
     final IntervalNode node = root.getMaxNode();
     final Interval<T> data = node.getData();
     node.delete();
     return data;
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @throws NullPointerException If the provided {@link Interval} is null.
+   * @complexity O(log(n))
+   */
   @Override
-  public NavigableSet<Interval<T>> descendingSet() {
-    // FIXME: Implement this.
-    throw new UnsupportedOperationException();
+  public boolean remove(final Interval<T> key) {
+    return removeFast(key);
+  }
+
+  protected boolean remove(final IntervalNode root, final Interval<T> key) {
+    if (!key.intersects(root.getMinNodeMin(), root.getMaxNodeMax()))
+      return false;
+
+    changed = false;
+    final IntervalNode newRoot = deleteNodeUnsafe(key, root);
+    if (newRoot != root) {
+      if (newRoot != null)
+        newRoot.setParent(null);
+
+      ++modCount;
+      setRoot(newRoot);
+      return true;
+    }
+
+    return changed;
   }
 
   @Override
-  public Iterator<Interval<T>> descendingIterator() {
-    // FIXME: Implement this.
-    throw new UnsupportedOperationException();
+  public boolean removeFast(final Interval<T> key) {
+    final IntervalNode root = getRoot();
+    return root != null && remove(root, key);
+  }
+
+  @Override
+  public boolean removeIf(final Predicate<? super Interval<T>> filter) {
+    Objects.requireNonNull(filter);
+    final IntervalNode root = getRoot();
+    if (root == null)
+      return false;
+
+    final int mc = modCount;
+    boolean removed = false;
+    final BinaryTreeIterator i = new BinaryTreeIterator(root);
+    while (i.hasNext()) {
+      if (filter.test(i.next())) {
+        i.remove();
+        removed = true;
+      }
+    }
+
+    if (modCount != mc)
+      throw new ConcurrentModificationException();
+
+    return removed;
+  }
+
+  @Override
+  protected Node searchNode(final Interval<T> key) {
+    final IntervalNode root = getRoot();
+    if (root == null)
+      return null;
+
+    final T keyMin = key.getMin();
+    if (keyMin == null) {
+      final IntervalNode minNode = root.getMinNode();
+      return minNode.getData().getMin() == null ? minNode : null;
+    }
+
+    final T minNodeMin = root.getMinNodeMin();
+    final T maxNodeMax = root.getMaxNodeMax();
+    if (minNodeMin != null && key.compare(keyMin, minNodeMin) < 0 || maxNodeMax != null && key.compare(keyMin, maxNodeMax) >= 0)
+      return null;
+
+    return searchNode(keyMin, root);
+  }
+
+  private Node searchNode(final T keyMin, final IntervalNode node) {
+    final Interval<T> data = node.getData();
+    final T dataMin = data.getMin();
+    final T dataMax;
+    return dataMin != null && data.compare(keyMin, dataMin) < 0 ? searchNodeLeft(keyMin, node.getLeft()) : (dataMax = data.getMax()) != null && data.compare(keyMin, dataMax) >= 0 ? searchNodeRight(keyMin, node.getRight()) : node;
+  }
+
+  private Node searchNodeLeft(final T keyMin, final IntervalNode node) {
+    final Interval<T> data;
+    return node == null || (data = node.getMaxNode().getData()).compare(keyMin, data.getMax()) >= 0 ? null : searchNode(keyMin, node);
+  }
+
+  private Node searchNodeRight(final T keyMin, final IntervalNode node) {
+    final Interval<T> data;
+    return node == null || (data = node.getMinNode().getData()).compare(keyMin, data.getMin()) < 0 ? null : searchNode(keyMin, node);
   }
 
   @Override
@@ -1166,13 +1256,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
   }
 
   @Override
-  public NavigableSet<Interval<T>> headSet(final Interval<T> toElement, final boolean inclusive) {
-    // FIXME: Implement this.
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public SortedSet<Interval<T>> headSet(final Interval<T> toElement) {
+  public SortedSet<Interval<T>> tailSet(final Interval<T> fromElement) {
     // FIXME: Implement this.
     throw new UnsupportedOperationException();
   }
@@ -1181,16 +1265,5 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
   public NavigableSet<Interval<T>> tailSet(final Interval<T> fromElement, final boolean inclusive) {
     // FIXME: Implement this.
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public SortedSet<Interval<T>> tailSet(final Interval<T> fromElement) {
-    // FIXME: Implement this.
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public IntervalTreeSet<T> clone() {
-    return (IntervalTreeSet<T>)super.clone();
   }
 }
