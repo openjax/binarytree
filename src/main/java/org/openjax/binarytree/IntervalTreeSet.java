@@ -958,7 +958,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
       final Interval<T> nodeData = node.getData();
       final T nodeMax = nodeData.getMax();
       final T keyMax = key.getMax();
-      final boolean updateMax = keyMax == null ? nodeMax != null : key.compare(keyMax, nodeMax) > 0;
+      final boolean updateMax = keyMax == null ? nodeMax != null : nodeMax != null && key.compare(keyMax, nodeMax) > 0;
       if (updateMax) {
         node.superSetRight(mergeRight(key, keyMax, keyMin, node, node.getRight()));
 //        if (nodeData == node.getData()) { // Seems to not be needed, because it's guaranteed that `mergeRight` will call `node.setData()`.
