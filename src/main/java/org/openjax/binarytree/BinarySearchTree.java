@@ -86,7 +86,7 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
     protected Node insertNode(final T key) {
       Node node = getRoot();
       if (node == null) {
-        ppMod();
+        incModCount();
         setRoot(node = newNode(key));
         return node;
       }
@@ -143,12 +143,12 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
         return false;
 
       deleteNode(key, node);
-      ppMod();
+      incModCount();
       return true;
     }
 
     @Override
-    protected Node searchNode(final T key) {
+    protected Node searchNodeFast(final T key) {
       Node node = getRoot();
       while (node != null) {
         if (Objects.equals(node.getData(), key))
@@ -231,7 +231,7 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
 
     protected Node insertNode(final T key, final Node node) {
       if (node == null) {
-        ppMod();
+        incModCount();
         changed = true;
         return newNode(key);
       }
@@ -256,7 +256,7 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
     }
 
     @Override
-    protected Node searchNode(final T key) {
+    protected Node searchNodeFast(final T key) {
       return searchNode(key, getRoot());
     }
 
@@ -331,8 +331,9 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
    * @throws NullPointerException If the specified key is null.
    */
   @Override
+  @SuppressWarnings("unchecked")
   public boolean contains(final Object o) {
-    return containsFast(o);
+    return searchNode((T)o) != null;
   }
 
   /**
@@ -344,15 +345,16 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
    * @throws NullPointerException If the specified key is null.
    */
   public boolean contains(final T o) {
-    return containsFast(o);
+    return searchNode(o) != null;
   }
 
   @Override
   public boolean containsAll(final Collection<?> c) {
     final int size = c.size();
-    if (size == 0)
-      return true;
+    return size > 0 && containsAll(c, size);
+  }
 
+  protected boolean containsAll(final Collection<?> c, final int size) {
     final List<?> l;
     if (c instanceof List && CollectionUtil.isRandomAccess(l = (List<?>)c)) {
       int i = 0; do // [RA]
@@ -371,12 +373,12 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
   }
 
   protected boolean containsFast(final T o) {
-    return searchNode(o) != null;
+    return searchNodeFast(o) != null;
   }
 
   @SuppressWarnings("unchecked")
   protected boolean containsFast(final Object o) {
-    return searchNode((T)o) != null;
+    return searchNodeFast((T)o) != null;
   }
 
   protected abstract Node deleteNode(T key, Node node);
@@ -450,5 +452,9 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
    * @return The node, or {@code null} if no node with the given search key exists.
    * @throws NullPointerException If the specified key is null.
    */
-  protected abstract Node searchNode(T key);
+  protected Node searchNode(final T key) {
+    return searchNodeFast(key);
+  }
+
+  protected abstract Node searchNodeFast(T key);
 }

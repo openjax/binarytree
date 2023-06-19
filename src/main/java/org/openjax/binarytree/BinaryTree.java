@@ -91,7 +91,7 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
     }
   }
 
-  void ppMod() {
+  void incModCount() {
     ++modCount;
   }
 
@@ -465,7 +465,7 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
    * @complexity O(1)
    */
   public void clear() {
-    ppMod();
+    incModCount();
     setRoot(null);
   }
 

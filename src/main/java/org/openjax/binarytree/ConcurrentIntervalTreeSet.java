@@ -19,7 +19,6 @@ package org.openjax.binarytree;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.NavigableSet;
-import java.util.Objects;
 import java.util.SortedSet;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -177,21 +176,10 @@ public class ConcurrentIntervalTreeSet<T> extends IntervalTreeSet<T> {
   }
 
   @Override
-  public boolean contains(final Interval<T> key) {
+  protected Node searchNode(final Interval<T> key) {
     reading.lock();
     try {
-      return super.contains(key);
-    }
-    finally {
-      reading.unlock();
-    }
-  }
-
-  @Override
-  public boolean contains(final Object o) {
-    reading.lock();
-    try {
-      return super.contains(o);
+      return super.searchNodeFast(key);
     }
     finally {
       reading.unlock();
@@ -200,9 +188,13 @@ public class ConcurrentIntervalTreeSet<T> extends IntervalTreeSet<T> {
 
   @Override
   public boolean containsAll(final Collection<?> c) {
+    final int size = c.size();
+    if (size == 0)
+      return true;
+
     reading.lock();
     try {
-      return super.containsAll(c);
+      return super.containsAll(c, size);
     }
     finally {
       reading.unlock();
@@ -237,17 +229,6 @@ public class ConcurrentIntervalTreeSet<T> extends IntervalTreeSet<T> {
     reading.lock();
     try {
       return super.equals(tree);
-    }
-    finally {
-      reading.unlock();
-    }
-  }
-
-  @Override
-  public Interval<T> first() {
-    reading.lock();
-    try {
-      return super.first();
     }
     finally {
       reading.unlock();
@@ -325,17 +306,6 @@ public class ConcurrentIntervalTreeSet<T> extends IntervalTreeSet<T> {
   public Iterator<Interval<T>> iterator() {
     final IntervalNode root = getRoot();
     return root == null ? Iterators.empty() : new ConcurrentBinaryTreeIterator(root);
-  }
-
-  @Override
-  public Interval<T> last() {
-    reading.lock();
-    try {
-      return super.last();
-    }
-    finally {
-      reading.unlock();
-    }
   }
 
   @Override
