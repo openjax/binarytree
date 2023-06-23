@@ -54,7 +54,7 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
       if (next == null)
         throw new NoSuchElementException();
 
-      final T data = next.getData();
+      final T key = next.getKey();
       prevPrev = prev;
       prev = next;
 
@@ -70,7 +70,7 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
         this.next = next;
       }
 
-      return data;
+      return key;
     }
 
     @Override
@@ -96,18 +96,18 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
   }
 
   protected class Node {
-    private T data;
+    private T key;
     private Node parent;
     private Node left;
     private Node right;
     private int size = 1;
 
-    protected Node(final T data) {
-      setData(data);
+    protected Node(final T key) {
+      setKey(key);
     }
 
     protected Node clone(final BinaryTree<T> tree) {
-      final Node clone = tree.newNode(data);
+      final Node clone = tree.newNode(key);
       clone.size = size;
 
       if (left != null) {
@@ -137,19 +137,19 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
             replaceRight(parent, null);
         }
         else {
-          setData(right.getData());
+          setKey(right.getKey());
           replaceLeft(this, right.getLeft());
           replaceRight(this, right.getRight());
         }
       }
       else if (right == null) {
-        setData(left.getData());
+        setKey(left.getKey());
         replaceLeft(this, left.getLeft());
         replaceRight(this, left.getRight());
       }
       else {
         final Node inOrderSuccessor = right.getMinNode();
-        setData(inOrderSuccessor.getData());
+        setKey(inOrderSuccessor.getKey());
         replaceInOrderSuccessor(inOrderSuccessor, right);
       }
     }
@@ -166,8 +166,8 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
       return Objects.equals(left, that.left) && Objects.equals(right, that.right);
     }
 
-    protected T getData() {
-      return data;
+    public T getKey() {
+      return key;
     }
 
     protected Node getLeft() {
@@ -203,7 +203,7 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
     }
 
     protected String getText() {
-      return data.toString() + " {S=" + size + "}";
+      return key.toString() + " {S=" + size + "}";
     }
 
     @Override
@@ -243,8 +243,8 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
       return rebalanced;
     }
 
-    protected void setData(final T data) {
-      this.data = data;
+    protected void setKey(final T key) {
+      this.key = key;
     }
 
     protected Node setLeft(final Node node) {
@@ -438,7 +438,7 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
       return index;
 
     index = toArray(n.getLeft(), a, index);
-    a[index++] = n.getData();
+    a[index++] = n.getKey();
     return toArray(n.getRight(), a, index);
   }
 
@@ -447,7 +447,7 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
       return;
 
     toString(b, n.getLeft());
-    b.append(',').append(n.getData());
+    b.append(',').append(n.getKey());
     toString(b, n.getRight());
   }
 

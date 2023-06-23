@@ -52,7 +52,7 @@ public class IntervalTreeSetRTest extends BinarySearchTreeTest<IntervalTreeSet<I
     final Integer keyMax = key.getMax();
     final BinaryTree<Interval<Integer>>.Node node = tree.searchNode(key);
     assertNotNull(node, onError);
-    assertTrue(node.getData().contains(key), onError);
+    assertTrue(node.getKey().contains(key), onError);
     assertTrue(tree.contains(key), onError);
     assertTrue(tree.contains(keyMin), onError);
     assertTrue(tree.contains(keyMin + (keyMax - keyMin) / 2), onError);
@@ -125,11 +125,11 @@ public class IntervalTreeSetRTest extends BinarySearchTreeTest<IntervalTreeSet<I
     final Interval<Integer> leftMinMax = assertMinMaxSetCorrectly(node.getLeft(), onError);
     final Interval<Integer> rightMinMax = assertMinMaxSetCorrectly(node.getRight(), onError);
 
-    final Integer min = leftMinMax != null ? leftMinMax.getMin() : node.getData().getMin();
-    final Integer max = rightMinMax != null ? rightMinMax.getMax() : node.getData().getMax();
+    final Integer min = leftMinMax != null ? leftMinMax.getMin() : node.getKey().getMin();
+    final Integer max = rightMinMax != null ? rightMinMax.getMax() : node.getKey().getMax();
 
-    final Integer minNode = node.getMinNode().getData().getMin();
-    final Integer maxNode = node.getMaxNode().getData().getMax();
+    final Integer minNode = node.getMinNode().getKey().getMin();
+    final Integer maxNode = node.getMaxNode().getKey().getMax();
 
     assertEquals(min, minNode, onError);
     assertEquals(max, maxNode, onError);
@@ -260,7 +260,7 @@ public class IntervalTreeSetRTest extends BinarySearchTreeTest<IntervalTreeSet<I
           if (len == 0) {
             final String str = tree.toString();
             final IntervalTreeSet<Integer> clone = tree.clone();
-            assertTrue(clone.remove(range), onError);
+            assertTrue(clone.delete(range), onError);
             assertEquals(str, tree.toString(), onError);
             assertSpecificTreeInvariants(clone, onError);
           }

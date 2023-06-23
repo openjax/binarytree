@@ -353,10 +353,11 @@ public class ConcurrentIntervalTreeSet<T> extends IntervalTreeSet<T> {
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public boolean remove(final Object o) {
     writing.lock();
     try {
-      return super.remove(o);
+      return super.delete((Interval<T>)o);
     }
     finally {
       writing.unlock();

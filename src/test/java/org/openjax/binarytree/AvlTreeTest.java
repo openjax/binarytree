@@ -51,11 +51,11 @@ public class AvlTreeTest extends BinarySearchTreeIntegerTest<AvlTree<Integer>> {
   static void validateHeight(final AvlTree<?>.AvlNode node, final int leftHeight, final int rightHeight, final Supplier<String> onError) {
     final int expectedHeight = 1 + Math.max(leftHeight, rightHeight);
     final int actualHeight = AvlTree.height(node);
-    assertEquals(expectedHeight, actualHeight, onError(onError, () -> "Height of node " + node.getData() + " is " + actualHeight + " (expected: " + expectedHeight + ")"));
+    assertEquals(expectedHeight, actualHeight, onError(onError, () -> "Height of node " + node.getKey() + " is " + actualHeight + " (expected: " + expectedHeight + ")"));
   }
 
   static void validateBalanceFactor(final AvlTree<?>.AvlNode node, final int leftHeight, final int rightHeight, final Supplier<String> onError) {
     final int bf = rightHeight - leftHeight;
-    assertTrue(-1 <= bf && bf <= 1, onError(onError, () -> "Balance factor (bf) of node " + node.getData() + " is " + bf + " (expected: -1 <= bf <= 1)"));
+    assertTrue(-1 <= bf && bf <= 1, onError(onError, () -> "Balance factor (bf) of node " + node.getKey() + " is " + bf + " (expected: -1 <= bf <= 1)"));
   }
 }

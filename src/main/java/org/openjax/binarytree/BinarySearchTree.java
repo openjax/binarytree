@@ -25,11 +25,11 @@ import org.libj.util.CollectionUtil;
 
 /**
  * Abstract subclass of {@link BinaryTree} defining methods for the {@linkplain #add(Comparable) addition},
- * {@linkplain #remove(Comparable) removal}, and {@linkplain #contains(Object) search} of keys.
+ * {@linkplain #delete(Comparable) removal}, and {@linkplain #contains(Object) search} of keys.
  *
  * @param <T> The type parameter of values belonging to this tree.
  */
-public abstract class BinarySearchTree<T extends Comparable<? super T>> extends BinaryTree<T> implements Collection<T> {
+public abstract class BinarySearchTree<T extends Comparable<? super T>> extends BinaryTree<T> {
   /**
    * Implementation of {@link BinarySearchTree} utilizing recursive logic.
    *
@@ -37,8 +37,8 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
    */
   protected static class Iterative<T extends Comparable<? super T>> extends BinarySearchTree<T> {
     protected class IterativeNode extends Node {
-      protected IterativeNode(final T data) {
-        super(data);
+      protected IterativeNode(final T key) {
+        super(key);
       }
 
       @Override
@@ -50,14 +50,38 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
       }
     }
 
+    protected transient boolean changed;
+
     @Override
-    public boolean add(final T key) {
+    protected boolean add(final T key) {
       return addFast(key);
     }
 
     @Override
     protected boolean addFast(final T key) {
       return insertNode(key) != null;
+    }
+
+    @Override
+    protected boolean delete(final T key) {
+      return deleteFast(key);
+    }
+
+    @Override
+    protected boolean deleteFast(final T key) {
+      final Node root = getRoot();
+      Node node = root;
+
+      T nodeKey;
+      while (node != null && !key.equals((nodeKey = node.getKey())))
+        node = key.compareTo(nodeKey) < 0 ? node.getLeft() : node.getRight();
+
+      if (node == null)
+        return false;
+
+      deleteNode(key, node);
+      incModCount();
+      return true;
     }
 
     @Override
@@ -73,7 +97,7 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
       }
       else {
         final Node inOrderSuccessor = right.getMinNode();
-        node.setData(inOrderSuccessor.getData());
+        node.setKey(inOrderSuccessor.getKey());
         if (inOrderSuccessor == right)
           node.setRight(inOrderSuccessor.getRight());
         else
@@ -92,7 +116,7 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
       }
 
       do {
-        final int c = key.compareTo(node.getData());
+        final int c = key.compareTo(node.getKey());
         if (c < 0) {
           final Node left = node.getLeft();
           if (left != null) {
@@ -122,39 +146,18 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
 
     @Override
     protected Node newNode(final T key) {
+      changed = true;
       return new IterativeNode(key);
-    }
-
-    @Override
-    public boolean remove(final T key) {
-      return removeFast(key);
-    }
-
-    @Override
-    protected boolean removeFast(final T key) {
-      final Node root = getRoot();
-      Node node = root;
-
-      T data;
-      while (node != null && !key.equals((data = node.getData())))
-        node = key.compareTo(data) < 0 ? node.getLeft() : node.getRight();
-
-      if (node == null)
-        return false;
-
-      deleteNode(key, node);
-      incModCount();
-      return true;
     }
 
     @Override
     protected Node searchNodeFast(final T key) {
       Node node = getRoot();
       while (node != null) {
-        if (Objects.equals(node.getData(), key))
+        if (Objects.equals(node.getKey(), key))
           return node;
 
-        node = key.compareTo(node.getData()) < 0 ? node.getLeft() : node.getRight();
+        node = key.compareTo(node.getKey()) < 0 ? node.getLeft() : node.getRight();
       }
 
       return null;
@@ -164,7 +167,7 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
       final Node parent = node.getParent();
       if (node == getRoot())
         setRoot(child);
-      else if (key.compareTo(parent.getData()) < 0)
+      else if (key.compareTo(parent.getKey()) < 0)
         parent.setLeft(child);
       else
         parent.setRight(child);
@@ -183,7 +186,7 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
     protected transient boolean changed;
 
     @Override
-    public boolean add(final T key) {
+    protected boolean add(final T key) {
       return addFast(key);
     }
 
@@ -195,12 +198,27 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
     }
 
     @Override
+    protected boolean delete(final T key) {
+      return deleteFast(key);
+    }
+
+    @Override
+    protected boolean deleteFast(final T key) {
+      changed = false;
+      setRoot(deleteNode(key, getRoot()));
+      if (changed)
+        ++modCount;
+
+      return changed;
+    }
+
+    @Override
     protected Node deleteNode(final T key, final Node node) {
       if (node == null)
         return null;
 
       final Node left = node.getLeft();
-      final int c = key.compareTo(node.getData());
+      final int c = key.compareTo(node.getKey());
       if (c < 0)
         return node.setLeft(deleteNode(key, left));
 
@@ -223,9 +241,9 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
       }
       else {
         final Node inOrderSuccessor = right.getMinNode();
-        final T data = inOrderSuccessor.getData();
-        node.setData(data);
-        return node.setRight(deleteNode(data, right));
+        final T nodeKey = inOrderSuccessor.getKey();
+        node.setKey(nodeKey);
+        return node.setRight(deleteNode(nodeKey, right));
       }
     }
 
@@ -236,23 +254,8 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
         return newNode(key);
       }
 
-      final int c = key.compareTo(node.getData());
+      final int c = key.compareTo(node.getKey());
       return c < 0 ? node.setLeft(insertNode(key, node.getLeft())) : c > 0 ? node.setRight(insertNode(key, node.getRight())) : node;
-    }
-
-    @Override
-    public boolean remove(final T key) {
-      return removeFast(key);
-    }
-
-    @Override
-    protected boolean removeFast(final T key) {
-      changed = false;
-      setRoot(deleteNode(key, getRoot()));
-      if (changed)
-        ++modCount;
-
-      return changed;
     }
 
     @Override
@@ -261,8 +264,8 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
     }
 
     private Node searchNode(final T key, final Node node) {
-      final T data;
-      return node == null ? null : Objects.equals((data = node.getData()), key) ? node : searchNode(key, key.compareTo(data) < 0 ? node.getLeft() : node.getRight());
+      final T nodeKey;
+      return node == null ? null : Objects.equals((nodeKey = node.getKey()), key) ? node : searchNode(key, key.compareTo(nodeKey) < 0 ? node.getLeft() : node.getRight());
     }
   }
 
@@ -275,12 +278,10 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
    *         specified element.
    * @throws NullPointerException If the specified key is null.
    */
-  @Override
-  public abstract boolean add(T key);
+  protected abstract boolean add(T key);
 
-  @Override
   @SuppressWarnings("unchecked")
-  public boolean addAll(final Collection<? extends T> c) {
+  protected boolean addAll(final Collection<? extends T> c) {
     if (c instanceof BinaryTree)
       return addAll(((BinaryTree<T>)c).getRoot());
 
@@ -310,7 +311,7 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
 
     boolean changed = false;
     changed |= addAll(n.getLeft());
-    changed |= addFast(n.getData());
+    changed |= addFast(n.getKey());
     changed |= addAll(n.getRight());
     return changed;
   }
@@ -330,9 +331,8 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
    * @throws ClassCastException If the type of the specified element is incompatible with this tree.
    * @throws NullPointerException If the specified key is null.
    */
-  @Override
   @SuppressWarnings("unchecked")
-  public boolean contains(final Object o) {
+  protected boolean contains(final Object o) {
     return searchNode((T)o) != null;
   }
 
@@ -344,12 +344,11 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
    * @throws ClassCastException If the type of the specified element is incompatible with this tree.
    * @throws NullPointerException If the specified key is null.
    */
-  public boolean contains(final T o) {
+  protected boolean contains(final T o) {
     return searchNode(o) != null;
   }
 
-  @Override
-  public boolean containsAll(final Collection<?> c) {
+  protected boolean containsAll(final Collection<?> c) {
     final int size = c.size();
     return size > 0 && containsAll(c, size);
   }
@@ -383,12 +382,6 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
 
   protected abstract Node deleteNode(T key, Node node);
 
-  @Override
-  @SuppressWarnings("unchecked")
-  public boolean remove(final Object o) {
-    return remove((T)o);
-  }
-
   /**
    * Removes the specified key from this tree. Returns {@code true} if this collection changed as a result of the call, and
    * {@code false} other if this tree did not contain the specified element.
@@ -398,11 +391,12 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
    *         the specified element.
    * @throws NullPointerException If the specified key is null.
    */
-  public abstract boolean remove(T key);
+  protected abstract boolean delete(T key);
 
-  @Override
+  protected abstract boolean deleteFast(T key);
+
   @SuppressWarnings("unchecked")
-  public boolean removeAll(final Collection<?> c) {
+  protected boolean removeAll(final Collection<?> c) {
     final int i$ = c.size();
     if (i$ == 0)
       return false;
@@ -411,22 +405,19 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
     final List<? extends T> l;
     if (c instanceof List && CollectionUtil.isRandomAccess(l = (List<? extends T>)c)) {
       int i = 0; do // [RA]
-        removeFast(l.get(i));
+        deleteFast(l.get(i));
       while (++i < i$);
     }
     else {
       final Iterator<? extends T> it = (Iterator<? extends T>)c.iterator(); do // [I]
-        removeFast(it.next());
+        deleteFast(it.next());
       while (it.hasNext());
     }
 
     return size != size();
   }
 
-  protected abstract boolean removeFast(T key);
-
-  @Override
-  public boolean retainAll(final Collection<?> c) {
+  protected boolean retainAll(final Collection<?> c) {
     final int size = size();
     final int cSize = c.size();
     if (cSize == 0) {

@@ -38,11 +38,11 @@ final class BinarySearchTreeValidator {
     if (node == null)
       return true;
 
-    final T data = (T)node.getData();
-    if (data.compareTo(minAllowedKey) < 0 || data.compareTo(maxAllowedKey) > 0)
+    final T key = (T)node.getKey();
+    if (key.compareTo(minAllowedKey) < 0 || key.compareTo(maxAllowedKey) > 0)
       return false;
 
-    return isTreeWithoutDuplicates(test, node.getLeft(), minAllowedKey, test.prevValue(data)) && isTreeWithoutDuplicates(test, node.getRight(), test.nextValue(data), maxAllowedKey);
+    return isTreeWithoutDuplicates(test, node.getLeft(), minAllowedKey, test.prevValue(key)) && isTreeWithoutDuplicates(test, node.getRight(), test.nextValue(key), maxAllowedKey);
   }
 
   /**
@@ -63,10 +63,10 @@ final class BinarySearchTreeValidator {
     if (node == null)
       return true;
 
-    final T data = (T)node.getData();
-    if (data.compareTo(minAllowedKey) < 0 || data.compareTo(maxAllowedKey) > 0)
+    final T key = (T)node.getKey();
+    if (key.compareTo(minAllowedKey) < 0 || key.compareTo(maxAllowedKey) > 0)
       return false;
 
-    return isTreeWithDuplicates(node.getLeft(), minAllowedKey, data) && isTreeWithDuplicates(node.getRight(), data, maxAllowedKey);
+    return isTreeWithDuplicates(node.getLeft(), minAllowedKey, key) && isTreeWithDuplicates(node.getRight(), key, maxAllowedKey);
   }
 }

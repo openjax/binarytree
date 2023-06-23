@@ -232,7 +232,7 @@ public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T ext
   BinaryTree<T>.Node assertNodeWithKeyIsPresent(final BST tree, final T key, final Supplier<String> onError) {
     final BinaryTree<T>.Node node = tree.searchNode(key);
     assertNotNull(node, onError);
-    assertEquals(key, node.getData(), onError);
+    assertEquals(key, node.getKey(), onError);
     return node;
   }
 
@@ -244,7 +244,7 @@ public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T ext
       test(onError -> {
         final BST tree = createTree();
         addKeys(tree, shuffledKeys, orderedKeys, onError);
-        final T highestKey = tree.getRoot().getMaxNode().getData();
+        final T highestKey = tree.getRoot().getMaxNode().getKey();
         final T key = nextValue(highestKey);
         assertNull(tree.searchNode(key), onError);
       });
@@ -271,7 +271,7 @@ public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T ext
           OUT:
           for (int i = 0, i$ = keysToDelete.size(); i < i$; ++i) { // [RA]
             final T keyToDelete = keysToDelete.get(i);
-            assertTrue(tree1.remove(keyToDelete), onError2);
+            assertTrue(tree1.delete(keyToDelete), onError2);
             assertTrue(keysRemaining.remove(keyToDelete), onError2);
             if (i % 10 == 0) {
               assertValid(tree1, onError2);
@@ -316,7 +316,7 @@ public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T ext
           for (int i = 0; keyIterator.hasNext(); ++i) { //[I]
             final T keyToDelete = keyIterator.next();
             final BinaryTree<T>.Node node = clone.getRoot().getMinNode();
-            assertEquals(keyToDelete, node.getData(), onError2);
+            assertEquals(keyToDelete, node.getKey(), onError2);
             assertTrue(treeIterator.hasNext(), onError2);
             assertEquals(keyToDelete, treeIterator.next(), onError2);
             keyIterator.remove();
@@ -343,10 +343,10 @@ public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T ext
         final BST tree = createTree();
         addKeys(tree, shuffledKeys, orderedKeys, onError);
 
-        final T highestKey = tree.getRoot().getMaxNode().getData();
+        final T highestKey = tree.getRoot().getMaxNode().getKey();
         final T notExistingKey = nextValue(highestKey);
 
-        assertFalse(tree.remove(notExistingKey), onError);
+        assertFalse(tree.delete(notExistingKey), onError);
         assertEquals(tree, tree, onError);
         assertValid(tree, onError);
         assertHasKeysInGivenOrderAndAscending(tree, orderedKeys, onError);
@@ -415,8 +415,8 @@ public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T ext
       assertNull(node.getParent(), onError(onError, () -> "Root must not have a parent"));
     }
     else {
-      assertNotNull(node.getParent(), onError(onError, () -> "Node " + node.getData() + " has no parent"));
-      assertEquals(parent, node.getParent(), onError(onError, () -> "Parent " + node.getParent().getData() + " of node " + node.getData() + " isn't the expected parent " + parent.getData()));
+      assertNotNull(node.getParent(), onError(onError, () -> "Node " + node.getKey() + " has no parent"));
+      assertEquals(parent, node.getParent(), onError(onError, () -> "Parent " + node.getParent().getKey() + " of node " + node.getKey() + " isn't the expected parent " + parent.getKey()));
     }
 
     assertParentsSetCorrectly(root, node, node.getLeft(), onError);

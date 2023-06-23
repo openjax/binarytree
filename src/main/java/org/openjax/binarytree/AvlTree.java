@@ -25,8 +25,8 @@ public class AvlTree<T extends Comparable<? super T>> extends BinarySearchTree.R
   protected class AvlNode extends Node {
     private int height;
 
-    public AvlNode(final T data) {
-      super(data);
+    protected AvlNode(final T key) {
+      super(key);
     }
 
     protected int balanceFactor() {
@@ -57,7 +57,7 @@ public class AvlTree<T extends Comparable<? super T>> extends BinarySearchTree.R
 
     @Override
     protected String getText() {
-      return getData() + " {H=" + height + ",BF=" + balanceFactor() + ",S=" + getSize() + "}";
+      return getKey() + " {H=" + height + ",BF=" + balanceFactor() + ",S=" + getSize() + "}";
     }
 
     protected AvlNode rebalance() {
@@ -84,7 +84,7 @@ public class AvlTree<T extends Comparable<? super T>> extends BinarySearchTree.R
 
     @Override
     protected void replaceInOrderSuccessor(final Node inOrderSuccessor, final Node right) {
-      replaceRight(this, deleteNode(inOrderSuccessor.getData(), right));
+      replaceRight(this, deleteNode(inOrderSuccessor.getKey(), right));
     }
 
     @Override
