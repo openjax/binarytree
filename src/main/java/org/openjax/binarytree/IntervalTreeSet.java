@@ -173,15 +173,15 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
     }
 
     @Override
-    protected Node superSetLeft(final Node node) {
+    protected Node setLeft$(final Node node) {
       this.setMinNode(node != null ? ((IntervalNode)node).getMinNode() : this);
-      return super.superSetLeft(node);
+      return super.setLeft$(node);
     }
 
     @Override
-    protected Node superSetRight(final Node node) {
+    protected Node setRight$(final Node node) {
       this.setMaxNode(node != null ? ((IntervalNode)node).getMaxNode() : this);
-      return super.superSetRight(node);
+      return super.setRight$(node);
     }
 
     private void updateMinMax() {
@@ -954,7 +954,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
     final IntervalNode right = node.getRight();
     if (right != null) {
       right.updateHeight();
-      node.superSetRight(right.rebalance());
+      node.setRight$(right.rebalance());
     }
 
     return left;
@@ -974,7 +974,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
       final T keyMax = key.getMax();
       final boolean updateMax = keyMax == null ? nodeMax != null : nodeMax != null && key.compare(keyMax, nodeMax) > 0;
       if (updateMax) {
-        node.superSetRight(mergeRight(key, keyMax, keyMin, node, node.getRight()));
+        node.setRight$(mergeRight(key, keyMax, keyMin, node, node.getRight()));
 //        if (nodeKey == node.getKey()) { // Seems to not be needed, because it's guaranteed that `mergeRight` will call `node.setKey()`.
 //          node.setKey(key.newInstance(keyMin, nodeMax));
 //          ppMod();
@@ -1030,7 +1030,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
     final boolean updateMax = keyMax == null ? nodeKeyMax != null : key.compare(keyMax, nodeKeyMax) > 0;
     if (updateMax) {
       final boolean updateMin = childMin == null || key.compare(childMin, nodeKey.getMin()) < 0;
-      node.superSetRight(mergeRight(key, keyMax, updateMin ? childMin : keyMin, node, node.getRight()));
+      node.setRight$(mergeRight(key, keyMax, updateMin ? childMin : keyMin, node, node.getRight()));
 //      if (nodeKey == node.getKey() && updateMin) { // Seems to not be needed, because it's guaranteed that `mergeRight` will call `node.setKey()`.
 //        node.setKey(key.newInstance(childMin, nodeMax));
 //        ppMod();

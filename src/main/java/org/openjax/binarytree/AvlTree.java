@@ -66,7 +66,7 @@ public class AvlTree<T extends Comparable<? super T>> extends BinarySearchTree.R
       if (balanceFactor < -1) {
         final AvlNode left = getLeft();
         if (left.balanceFactor() > 0)
-          superSetLeft(left.rotateLeft());
+          setLeft$(left.rotateLeft());
 
         return rotateRight();
       }
@@ -74,7 +74,7 @@ public class AvlTree<T extends Comparable<? super T>> extends BinarySearchTree.R
       if (balanceFactor > 1) {
         final AvlNode right = getRight();
         if (right.balanceFactor() < 0)
-          superSetRight(right.rotateRight());
+          setRight$(right.rotateRight());
 
         return rotateLeft();
       }
@@ -124,7 +124,7 @@ public class AvlTree<T extends Comparable<? super T>> extends BinarySearchTree.R
     protected AvlNode rotateLeft() {
       final AvlNode rightChild = getRight();
       rightChild.setParent(null);
-      rightChild.superSetLeft(setRight(rightChild.getLeft()));
+      rightChild.setLeft$(setRight(rightChild.getLeft()));
       rightChild.updateHeight();
       return rightChild;
     }
@@ -132,30 +132,30 @@ public class AvlTree<T extends Comparable<? super T>> extends BinarySearchTree.R
     protected AvlNode rotateRight() {
       final AvlNode leftChild = getLeft();
       leftChild.setParent(null);
-      leftChild.superSetRight(setLeft(leftChild.getRight()));
+      leftChild.setRight$(setLeft(leftChild.getRight()));
       leftChild.updateHeight();
       return leftChild;
     }
 
     @Override
     protected AvlNode setLeft(final Node node) {
-      superSetLeft(node);
+      setLeft$(node);
       updateHeight();
       return rebalance();
     }
 
     @Override
     protected AvlNode setRight(final Node node) {
-      superSetRight(node);
+      setRight$(node);
       updateHeight();
       return rebalance();
     }
 
-    protected Node superSetLeft(final Node node) {
+    protected Node setLeft$(final Node node) {
       return super.setLeft(node);
     }
 
-    protected Node superSetRight(final Node node) {
+    protected Node setRight$(final Node node) {
       return super.setRight(node);
     }
 
