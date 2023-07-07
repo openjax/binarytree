@@ -30,7 +30,22 @@
   <description>
     Binary Tree implementations.
   </description>
-  <!-- FIXME: Add -Xcomp to surefire -->
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>regression-test</id>
+            <configuration>
+              <argLine>-Xcomp</argLine>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
   <dependencies>
     <dependency>
       <groupId>org.libj</groupId>
