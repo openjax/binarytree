@@ -161,7 +161,7 @@ public class IntervalArraySet<T> implements IntervalSet<T>, Cloneable {
 
   public boolean addAll(final Interval<T>[] a, int fromIndex, final int toIndex) {
     boolean changed = false;
-    while (fromIndex < toIndex) // [A]
+    while (fromIndex < toIndex)
       changed |= add(a[fromIndex++]);
 
     return changed;

@@ -39,7 +39,7 @@
           <execution>
             <id>regression-test</id>
             <configuration>
-              <argLine>-Xcomp</argLine>
+              <argLine>${argLine} -Xcomp</argLine>
             </configuration>
           </execution>
         </executions>

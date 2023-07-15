@@ -456,7 +456,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
    * @complexity O(log(n) * m)
    */
   public boolean addAll(final Interval<T>[] a, int fromIndex, final int toIndex) {
-    while (fromIndex < toIndex) // [A]
+    while (fromIndex < toIndex)
       addFast(a[fromIndex++]);
 
     return changed;
