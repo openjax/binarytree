@@ -27,9 +27,9 @@ import org.libj.util.Interval;
  */
 public interface IntervalSet<T> extends NavigableSet<Interval<T>> {
   /**
-   * Returns {@code true} if the full span (i.e. from the {@linkplain Interval#getMin() min} to the {@linkplain Interval#getMax()
-   * max} coordinates, which includes the min and max values themselves) of the provided {@code key} is present in (i.e. contained
-   * by) at least one {@link Interval} in this set, otherwise {@code false}.
+   * Returns {@code true} if the full span (i.e. from the {@linkplain Interval#getMin() min} to the {@linkplain Interval#getMax() max}
+   * coordinates, which includes the min and max values themselves) of the provided {@code key} is present in (i.e. contained by) at
+   * least one {@link Interval} in this set, otherwise {@code false}.
    *
    * @param key The key whose presence in this set is to be tested.
    * @throws NullPointerException If the provided {@link Interval} is null.
@@ -55,25 +55,24 @@ public interface IntervalSet<T> extends NavigableSet<Interval<T>> {
    * If the full range of the provided {@link Interval} is present (i.e. contained by) this set, then this method returns an empty
    * array.
    * <p>
-   * If the full range of the provided {@link Interval} is absent (i.e. not contained by) this set, then this method returns an
-   * array containing a reference to the provided {@link Interval}.
+   * If the full range of the provided {@link Interval} is absent (i.e. not contained by) this set, then this method returns an array
+   * containing a reference to the provided {@link Interval}.
    *
-   * @param key The {@link Interval} representing the range within which to determine the intervals that are not present in this
-   *          set.
-   * @return An array of {@link Interval} objects representing the intervals that are not present in this set within the range of
-   *         the provided {@link Interval}.
+   * @param key The {@link Interval} representing the range within which to determine the intervals that are not present in this set.
+   * @return An array of {@link Interval} objects representing the intervals that are not present in this set within the range of the
+   *         provided {@link Interval}.
    */
   Interval<T>[] difference(Interval<T> key);
 
   /**
    * Returns {@code true} if part of the span (i.e. from the {@linkplain Interval#getMin() min} to the {@linkplain Interval#getMax()
-   * max} coordinates, which includes the min and max values themselves) of the provided {@code key} is present in (i.e. contained
-   * by) at least one {@link Interval} in this set, otherwise {@code false}.
+   * max} coordinates, which includes the min and max values themselves) of the provided {@code key} is present in (i.e. contained by)
+   * at least one {@link Interval} in this set, otherwise {@code false}.
    *
    * @param key The {@link Interval} to test for intersection with this set.
    * @return {@code true} if part of the span (i.e. from the {@linkplain Interval#getMin() min} to the {@linkplain Interval#getMax()
-   *         max} coordinates, which includes the min and max values themselves) of the provided {@link Interval} is present in
-   *         (i.e. contained by) at least one {@link Interval} in this set, otherwise {@code false}.
+   *         max} coordinates, which includes the min and max values themselves) of the provided {@link Interval} is present in (i.e.
+   *         contained by) at least one {@link Interval} in this set, otherwise {@code false}.
    */
   boolean intersects(Interval<T> key);
 
@@ -86,12 +85,12 @@ public interface IntervalSet<T> extends NavigableSet<Interval<T>> {
   boolean remove(Interval<T> key);
 
   // TODO: Implement retain()...
-//  /**
-//   * Retains only the {@link Interval}s that intersect with the provided {@code key}, and returns {@code true} if the set was
-//   * modified, otherwise {@code false}.
-//   *
-//   * @param key The {@link Interval} to retain in this set.
-//   * @return {@code true} if the set was modified retaining the provided {@code key}, otherwise {@code false}.
-//   */
-//  boolean retain(Interval<T> key);
+  // /**
+  // * Retains only the {@link Interval}s that intersect with the provided {@code key}, and returns {@code true} if the set was
+  // * modified, otherwise {@code false}.
+  // *
+  // * @param key The {@link Interval} to retain in this set.
+  // * @return {@code true} if the set was modified retaining the provided {@code key}, otherwise {@code false}.
+  // */
+  // boolean retain(Interval<T> key);
 }

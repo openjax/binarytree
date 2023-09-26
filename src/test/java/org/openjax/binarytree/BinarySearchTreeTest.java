@@ -313,7 +313,7 @@ public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T ext
           final ArrayList<T> keys = CollectionUtil.asCollection(new ArrayList<>(), clone.toArray((T[])Array.newInstance(type(), size)));
           final Iterator<T> treeIterator = clone.iterator();
           final Iterator<T> keyIterator = keys.iterator();
-          for (int i = 0; keyIterator.hasNext(); ++i) { //[I]
+          for (int i = 0; keyIterator.hasNext(); ++i) { // [I]
             final T keyToDelete = keyIterator.next();
             final BinaryTree<T>.Node node = clone.getRoot().getMinNode();
             assertEquals(keyToDelete, node.getKey(), onError2);

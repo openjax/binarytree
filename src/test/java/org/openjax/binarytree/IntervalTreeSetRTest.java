@@ -320,7 +320,7 @@ public class IntervalTreeSetRTest extends BinarySearchTreeTest<IntervalTreeSet<I
           int size = clone.size();
           final ArrayList<Interval<Integer>> keys = CollectionUtil.asCollection(new ArrayList<>(), tree.toArray(new Interval[size]));
           final Iterator<Interval<Integer>> keyIterator = keys.iterator();
-          for (int i = 0; keyIterator.hasNext(); ++i) { //[I]
+          for (int i = 0; keyIterator.hasNext(); ++i) { // [I]
             final Interval<Integer> keyToDelete = keyIterator.next();
             final Interval<Integer> data = clone.pollFirst();
             assertEquals(keyToDelete, data, onError);
@@ -350,7 +350,7 @@ public class IntervalTreeSetRTest extends BinarySearchTreeTest<IntervalTreeSet<I
           int size = clone.size();
           final ArrayList<Interval<Integer>> keys = CollectionUtil.asCollection(new ArrayList<>(), tree.toArray(new Interval[size]));
           final ListIterator<Interval<Integer>> keyIterator = keys.listIterator(size);
-          for (int i = 0; keyIterator.hasPrevious(); ++i) { //[I]
+          for (int i = 0; keyIterator.hasPrevious(); ++i) { // [I]
             final Interval<Integer> keyToDelete = keyIterator.previous();
             final Interval<Integer> data = clone.pollLast();
             assertEquals(keyToDelete, data, onError);
@@ -496,7 +496,7 @@ public class IntervalTreeSetRTest extends BinarySearchTreeTest<IntervalTreeSet<I
     });
   }
 
-  private static <T extends IntervalSet<Integer>>T test(final ArrayList<Interval<Integer>> intervals, final T impl, final boolean[] added, final boolean setOrAssert, final long[] times, final int index, final Supplier<String> onError) {
+  private static <T extends IntervalSet<Integer>> T test(final ArrayList<Interval<Integer>> intervals, final T impl, final boolean[] added, final boolean setOrAssert, final long[] times, final int index, final Supplier<String> onError) {
     long time = 0;
     long ts;
     for (int i = 0, i$ = intervals.size(); i < i$; ++i) { // [RA]

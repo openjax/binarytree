@@ -71,8 +71,8 @@ public class IntervalArraySet<T> implements IntervalSet<T>, Cloneable {
   }
 
   /**
-   * Add the interval defined by the provided {@code (x,y)} values to this {@link IntervalArraySet}. If the provided interval
-   * overlaps one or more existing interval, the overlapping intervals are merged.
+   * Add the interval defined by the provided {@code (x,y)} values to this {@link IntervalArraySet}. If the provided interval overlaps
+   * one or more existing interval, the overlapping intervals are merged.
    *
    * @param key The {@link Interval} to be added.
    * @return {@code true} if the addition of the provided interval resulted in a change to this {@link IntervalArraySet}, otherwise
@@ -410,12 +410,6 @@ public class IntervalArraySet<T> implements IntervalSet<T>, Cloneable {
     return false;
   }
 
-
-
-
-
-
-
   @Override
   public boolean isEmpty() {
     return size() == 0;
@@ -518,7 +512,7 @@ public class IntervalArraySet<T> implements IntervalSet<T>, Cloneable {
   }
 
   @Override
-  public <E>E[] toArray(final E[] a) {
+  public <E> E[] toArray(final E[] a) {
     return data.toArray(a);
   }
 

@@ -32,6 +32,7 @@ import org.libj.util.function.TriObjIntConsumer;
 
 public class ConcurrentIntervalTreeSetTest {
   private static final Random random = new Random();
+
   private static void sleep(final long millis) {
     if (millis < 0)
       return;
@@ -46,14 +47,14 @@ public class ConcurrentIntervalTreeSetTest {
     }
   }
 
-  private static void seed(final IntervalSet<Integer> set, final AtomicInteger modCount, final AtomicBoolean finished, final TestExecutorService executor)  {
+  private static void seed(final IntervalSet<Integer> set, final AtomicInteger modCount, final AtomicBoolean finished, final TestExecutorService executor) {
     executor.execute(() -> {
       do {
         final int min = random.nextInt(10000);
         set.add(new Interval<>(min, min + 1 + random.nextInt(5)));
         modCount.getAndIncrement();
-//        System.err.print('.');
-//        System.err.flush();
+        // System.err.print('.');
+        // System.err.flush();
         sleep(2);
       }
       while (!finished.get());

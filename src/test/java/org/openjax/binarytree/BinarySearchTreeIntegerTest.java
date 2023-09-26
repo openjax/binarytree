@@ -26,7 +26,8 @@ abstract class BinarySearchTreeIntegerTest<BST extends BinarySearchTree<Integer>
   ArrayList<Integer> createOrderedSequenceOfKeys() {
     final int size = random.nextInt(TEST_TREE_MIN_SIZE, TEST_TREE_MAX_SIZE);
     final ArrayList<Integer> list = new ArrayList<>(size);
-    int i = 0; do
+    int i = 0;
+    do
       list.add(i);
     while (++i < size);
     return list;

@@ -422,8 +422,8 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
   }
 
   /**
-   * Returns the size of the provided {@link BinaryTree.Node}, or {@code 0} if the provided {@link BinaryTree.Node} is null. A
-   * node's size defined as the the count of the node itself (i.e. {@code 1}), plus the count of all of the node's children.
+   * Returns the size of the provided {@link BinaryTree.Node}, or {@code 0} if the provided {@link BinaryTree.Node} is null. A node's
+   * size defined as the the count of the node itself (i.e. {@code 1}), plus the count of all of the node's children.
    *
    * @param node The {@link BinaryTree.Node} for which to return the size.
    * @return The size of the provided {@link BinaryTree.Node}, or {@code 0} if the provided {@link BinaryTree.Node} is null.
@@ -454,7 +454,8 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
   /**
    * The number of times this {@link IntervalTreeSet} has been structurally modified. Structural modifications are those that change
    * the number of mappings in the {@link IntervalTreeSet} or otherwise modify its internal structure (e.g., rotate). This field is
-   * used to make iterators on Collection-views of the {@link IntervalTreeSet} fail-fast. (See {@link ConcurrentModificationException}).
+   * used to make iterators on Collection-views of the {@link IntervalTreeSet} fail-fast. (See
+   * {@link ConcurrentModificationException}).
    */
   protected transient int modCount;
   private Node root;
@@ -597,8 +598,8 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
    * Returns an array containing all of the elements in this set in ascending order. The returned array's
    * {@linkplain Class#getComponentType runtime component type} is {@code Object}.
    * <p>
-   * The returned array will be "safe" in that no references to it are maintained by this set. (In other words, this method
-   * allocates a new array). The caller is thus free to modify the returned array.
+   * The returned array will be "safe" in that no references to it are maintained by this set. (In other words, this method allocates
+   * a new array). The caller is thus free to modify the returned array.
    *
    * @return An array containing all of the elements in this set in ascending order.
    * @complexity O(n)
@@ -609,26 +610,26 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
   }
 
   /**
-   * Returns an array containing all of the elements in this set in ascending order; the runtime type of the returned array is that
-   * of the specified array. If the set fits in the specified array, it is returned therein. Otherwise, a new array is allocated
-   * with the runtime type of the specified array and the size of this set.
+   * Returns an array containing all of the elements in this set in ascending order; the runtime type of the returned array is that of
+   * the specified array. If the set fits in the specified array, it is returned therein. Otherwise, a new array is allocated with the
+   * runtime type of the specified array and the size of this set.
    * <p>
-   * If this set fits in the specified array with room to spare (i.e., the array has more elements than this set), the element in
-   * the array immediately following the end of the set is set to {@code null}.
+   * If this set fits in the specified array with room to spare (i.e., the array has more elements than this set), the element in the
+   * array immediately following the end of the set is set to {@code null}.
    * <p>
-   * The returned array will be "safe" in that no references to it are maintained by this set. (In other words, this method
-   * allocates a new array). The caller is thus free to modify the returned array.
+   * The returned array will be "safe" in that no references to it are maintained by this set. (In other words, this method allocates
+   * a new array). The caller is thus free to modify the returned array.
    *
    * @param <E> The component type of the array to contain the set.
-   * @param a The array into which the elements of this set are to be stored, if it is big enough; otherwise, a new array of the
-   *          same runtime type is allocated for this purpose.
+   * @param a The array into which the elements of this set are to be stored, if it is big enough; otherwise, a new array of the same
+   *          runtime type is allocated for this purpose.
    * @return An array containing all of the elements in this set.
    * @throws ArrayStoreException If the runtime type of any element in this set is not assignable to the
    *           {@linkplain Class#getComponentType runtime component type} of the specified array.
    * @throws NullPointerException If the specified array is null.
    * @complexity O(n)
    */
-  public <E>E[] toArray(E[] a) {
+  public <E> E[] toArray(E[] a) {
     final Node root = getRoot();
     if (root != null)
       return toArray(root, a);
@@ -647,7 +648,7 @@ public abstract class BinaryTree<T extends Comparable<? super T>> implements Clo
   }
 
   @SuppressWarnings("unchecked")
-  protected <E>E[] toArray(final Node node, E[] a) {
+  protected <E> E[] toArray(final Node node, E[] a) {
     final int size = size();
     if (a.length < size)
       a = (E[])Array.newInstance(a.getClass().getComponentType(), size);

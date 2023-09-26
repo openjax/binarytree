@@ -95,8 +95,8 @@ public class ConcurrentIntervalTreeSet<T> extends IntervalTreeSet<T> {
   }
 
   /**
-   * Creates a new {@link ConcurrentIntervalTreeSet} and calls {@link #add(Interval)} on the members of the provided array between
-   * the specified {@code fromIndex} and {@code toIndex} values.
+   * Creates a new {@link ConcurrentIntervalTreeSet} and calls {@link #add(Interval)} on the members of the provided array between the
+   * specified {@code fromIndex} and {@code toIndex} values.
    *
    * @param a The array of {@link Interval}s to {@linkplain #add(Interval) add}.
    * @param fromIndex The index of the first {@link Interval} (inclusive) to be added.
@@ -455,7 +455,7 @@ public class ConcurrentIntervalTreeSet<T> extends IntervalTreeSet<T> {
   }
 
   @Override
-  protected <E>E[] toArray(final Node node, final E[] a) {
+  protected <E> E[] toArray(final Node node, final E[] a) {
     reading.lock();
     try {
       return super.toArray(node, a);

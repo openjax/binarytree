@@ -229,8 +229,8 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
   }
 
   /**
-   * Creates a new {@link IntervalTreeSet} and calls {@link #add(Interval)} on the members of the provided array between the
-   * specified {@code fromIndex} and {@code toIndex} values.
+   * Creates a new {@link IntervalTreeSet} and calls {@link #add(Interval)} on the members of the provided array between the specified
+   * {@code fromIndex} and {@code toIndex} values.
    *
    * @param a The array of {@link Interval}s to {@linkplain #add(Interval) add}.
    * @param fromIndex The index of the first {@link Interval} (inclusive) to be added.
@@ -292,7 +292,8 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
       return node.setRight(mergeRight(key, node));
     }
 
-    /**                            ____________
+    /** @formatter:off
+     *                             ____________
      *                             |  parent  |
      *                         .   ------------
      *                     .
@@ -317,11 +318,12 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
      *                                    ___________
      *                                    |   key   |
      *                                    -----------
-     */
+     * @formatter:on */
     if (key.compare(keyMin, nodeKeyMax) > 0)
       return node.setRight(add(key, node.getRight()));
 
-    /** ____________
+    /** @formatter:off
+     *   ____________
      *  |  parent  |
      *  ------------
      *               .
@@ -346,11 +348,12 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
      * ___________
      * |   key   |
      * -----------
-     */
+     * @formatter:on */
     if (keyMax != null && key.compare(keyMax, nodeKeyMin) < 0)
       return node.setLeft(add(key, node.getLeft()));
 
-    /** ____________
+    /** @formatter:off
+     *  ____________
      *  |  parent  |
      *  ------------
      *               .
@@ -375,11 +378,12 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
      * ___________
      * |   key   |
      * -----------
-     */
+     * @formatter:on */
     if (key.compare(keyMin, nodeKeyMin) < 0)
       return node.setLeft(mergeLeft(key, node));
 
-    /**                            ____________
+    /** @formatter:off
+     *                             ____________
      *                             |  parent  |
      *                         .   ------------
      *                     .
@@ -404,7 +408,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
      *                      ___________
      *                      |   key   |
      *                      -----------
-     */
+     * @formatter:on */
     return node.setRight(mergeRight(key, node));
   }
 
@@ -429,8 +433,8 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
    * otherwise {@code false}.
    *
    * @param a An array of {@link Interval}s to add.
-   * @return {@code true} if this set changed due to the addition of the members of the provided array of {@link Interval}s,
-   *         otherwise {@code false}.
+   * @return {@code true} if this set changed due to the addition of the members of the provided array of {@link Interval}s, otherwise
+   *         {@code false}.
    * @throws NullPointerException If the provided array, or any member of the provided array is null.
    * @implNote {@link Interval} values that intersect are automatically merged.
    * @complexity O(log(n) * m)
@@ -960,13 +964,14 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
     return left;
   }
 
-  /**        __________
+  /** @formatter:off
+   *         __________
    *         |  root  |
    *         ----------
    * ___________
    * |   key   |
    * -----------
-   */
+   * @formatter:on */
   private IntervalNode mergeLeft(final Interval<T> key, final T keyMin, final IntervalNode node, final IntervalNode child) {
     if (child == null) {
       final Interval<T> nodeKey = node.getKey();
@@ -975,11 +980,11 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
       final boolean updateMax = keyMax == null ? nodeMax != null : nodeMax != null && key.compare(keyMax, nodeMax) > 0;
       if (updateMax) {
         node.setRight$(mergeRight(key, keyMax, keyMin, node, node.getRight()));
-//        if (nodeKey == node.getKey()) { // Seems to not be needed, because it's guaranteed that `mergeRight` will call `node.setKey()`.
-//          node.setKey(key.newInstance(keyMin, nodeMax));
-//          ppMod();
-//          changed = true;
-//        }
+        // if (nodeKey == node.getKey()) { // Seems to not be needed, because it's guaranteed that `mergeRight` will call `node.setKey()`.
+        // node.setKey(key.newInstance(keyMin, nodeMax));
+        // ppMod();
+        // changed = true;
+        // }
       }
       else {
         node.setKey(key.newInstance(keyMin, nodeMax));
@@ -992,7 +997,8 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
 
     final Interval<T> childKey = child.getKey();
 
-    /**      ___________
+    /** @formatter:off
+     *       ___________
      *       |  child  |
      *       -----------
      *    ___________
@@ -1000,17 +1006,18 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
      *    -----------
      *    |
      *  keyMin
-     */
+     * @formatter:on */
     final T childMin = childKey.getMin();
     if (keyMin == null || childMin != null && key.compare(keyMin, childMin) <= 0) {
-//      node.setMinNode(node); // FIXME: Is this needed?
+      // node.setMinNode(node); // FIXME: Is this needed?
       // Skip the child, and merge to its left
       incModCount();
       changed = true;
       return mergeLeft(key, keyMin, node, child.getLeft());
     }
 
-    /**  ___________
+    /** @formatter:off
+     *   ___________
      *   |  child  |
      *   -----------
      *                ___________
@@ -1018,7 +1025,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
      *                -----------
      *                |
      *              keyMin
-     */
+     * @formatter:on */
     if (key.compare(keyMin, childKey.getMax()) > 0) {
       // Keep the `child`, and merge to its right
       return child.setRight(mergeLeft(key, keyMin, node, child.getRight()));
@@ -1031,13 +1038,15 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
     if (updateMax) {
       final boolean updateMin = childMin == null || key.compare(childMin, nodeKey.getMin()) < 0;
       node.setRight$(mergeRight(key, keyMax, updateMin ? childMin : keyMin, node, node.getRight()));
-//      if (nodeKey == node.getKey() && updateMin) { // Seems to not be needed, because it's guaranteed that `mergeRight` will call `node.setKey()`.
-//        node.setKey(key.newInstance(childMin, nodeMax));
-//        ppMod();
-//        changed = true;
-//      }
+      // if (nodeKey == node.getKey() && updateMin) { // Seems to not be needed, because it's guaranteed that `mergeRight` will call
+      // `node.setKey()`.
+      // node.setKey(key.newInstance(childMin, nodeMax));
+      // ppMod();
+      // changed = true;
+      // }
     }
-    else { /* if (key.compare(childMin, nodeKey.getMin()) < 0) { */ // Not needed, because mergeLeft is called for c = -1, which guarantees this exact condition.
+    else { /* if (key.compare(childMin, nodeKey.getMin()) < 0) { */
+       // Not needed, because mergeLeft is called for c = -1, which guarantees this exact condition.
       node.setKey(key.newInstance(childMin, nodeKeyMax));
       incModCount();
       changed = true;
@@ -1051,13 +1060,14 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
     return mergeRight(key, keyMax, node.getKey().getMin(), node, node.getRight());
   }
 
-  /** __________
+  /** @formatter:off
+   *  __________
    *  |  root  |
    *  ----------
    *        ___________
    *        |   key   |
    *        -----------
-   */
+   * @formatter:on */
   private IntervalNode mergeRight(final Interval<T> key, T keyMax, final T nodeKeyMin, final IntervalNode node, final IntervalNode child) {
     if (child == null) {
       final T nodeKeyMax = node.getKey().getMax();
@@ -1070,7 +1080,8 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
       return null;
     }
 
-    /**  ___________
+    /** @formatter:off
+     *   ___________
      *   |  child  |
      *   -----------
      *      ___________
@@ -1078,7 +1089,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
      *      -----------
      *                |
      *              keyMax
-     */
+     * @formatter:on */
     final Interval<T> childKey = child.getKey();
     final T childKeyMax;
     if (keyMax == null || (childKeyMax = childKey.getMax()) != null && key.compare(keyMax, childKeyMax) > 0) {
@@ -1088,7 +1099,8 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
       return mergeRight(key, keyMax, nodeKeyMin, node, child.getRight());
     }
 
-    /**             ___________
+    /**@formatter:off
+     *              ___________
      *              |  child  |
      *              -----------
      * ___________
@@ -1096,7 +1108,7 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
      * -----------
      *           |
      *         keyMax
-     */
+     * @formatter:on */
     if (key.compare(keyMax, childKey.getMin()) < 0) {
       // Keep the `child`, and merge to its left
       return child.setLeft(mergeRight(key, keyMax, nodeKeyMin, node, child.getLeft()));
@@ -1104,7 +1116,8 @@ public class IntervalTreeSet<T> extends AvlTree<Interval<T>> implements Interval
 
     keyMax = childKeyMax;
 
-    { /* if (key.compare(keyMax, childKey.getMax()) > 0) { */ // Not needed, because mergeRight is called for c = 1, which guarantees this exact condition.
+    { /* if (key.compare(keyMax, childKey.getMax()) > 0) { */
+       // Not needed, because mergeRight is called for c = 1, which guarantees this exact condition.
       node.setKey(key.newInstance(nodeKeyMin, keyMax));
       incModCount();
       changed = true;

@@ -29,12 +29,12 @@ final class BinarySearchTreeValidator {
    * @param tree The binary tree to validate.
    * @return Whether the given binary tree is a binary search tree (with no duplicates allowed).
    */
-  static <BST extends BinaryTree<T>,T extends Comparable<? super T>>boolean isTreeWithoutDuplicates(final ValueSpec<T> valueSpec, final BST tree) {
+  static <BST extends BinaryTree<T>,T extends Comparable<? super T>> boolean isTreeWithoutDuplicates(final ValueSpec<T> valueSpec, final BST tree) {
     return isTreeWithoutDuplicates(valueSpec, tree.getRoot(), valueSpec.minValue(), valueSpec.maxValue());
   }
 
   @SuppressWarnings("unchecked")
-  private static <BST extends BinaryTree<T>,T extends Comparable<? super T>>boolean isTreeWithoutDuplicates(final ValueSpec<T> test, final BinaryTree<?>.Node node, final T minAllowedKey, final T maxAllowedKey) {
+  private static <BST extends BinaryTree<T>,T extends Comparable<? super T>> boolean isTreeWithoutDuplicates(final ValueSpec<T> test, final BinaryTree<?>.Node node, final T minAllowedKey, final T maxAllowedKey) {
     if (node == null)
       return true;
 
@@ -54,12 +54,12 @@ final class BinarySearchTreeValidator {
    * @param tree The binary tree to validate.
    * @return Whether the given binary tree is a binary search tree (with duplicates allowed).
    */
-  static <BST extends BinaryTree<T>,T extends Comparable<? super T>>boolean isTreeWithDuplicates(final ValueSpec<T> valueSpec, final BST tree) {
+  static <BST extends BinaryTree<T>,T extends Comparable<? super T>> boolean isTreeWithDuplicates(final ValueSpec<T> valueSpec, final BST tree) {
     return isTreeWithDuplicates(tree.getRoot(), valueSpec.minValue(), valueSpec.maxValue());
   }
 
   @SuppressWarnings("unchecked")
-  private static <BST extends BinaryTree<T>,T extends Comparable<? super T>>boolean isTreeWithDuplicates(final BinaryTree<?>.Node node, final T minAllowedKey, final T maxAllowedKey) {
+  private static <BST extends BinaryTree<T>,T extends Comparable<? super T>> boolean isTreeWithDuplicates(final BinaryTree<?>.Node node, final T minAllowedKey, final T maxAllowedKey) {
     if (node == null)
       return true;
 

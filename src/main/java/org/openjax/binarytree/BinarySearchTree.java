@@ -274,8 +274,8 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
    * {@code false} if this tree already contains the specified element.
    *
    * @param key The key to be added.
-   * @return {@code true} if this tree changed as a result of the call, and {@code false} if this tree already contains the
-   *         specified element.
+   * @return {@code true} if this tree changed as a result of the call, and {@code false} if this tree already contains the specified
+   *         element.
    * @throws NullPointerException If the specified key is null.
    */
   protected abstract boolean add(T key);
@@ -292,12 +292,14 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
     boolean changed = false;
     final List<? extends T> l;
     if (c instanceof List && CollectionUtil.isRandomAccess(l = (List<? extends T>)c)) {
-      int i = 0; do // [RA]
+      int i = 0;
+      do // [RA]
         changed |= addFast(l.get(i));
       while (++i < i$);
     }
     else {
-      final Iterator<? extends T> it = c.iterator(); do // [I]
+      final Iterator<? extends T> it = c.iterator();
+      do // [I]
         changed |= addFast(it.next());
       while (it.hasNext());
     }
@@ -356,13 +358,15 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
   protected boolean containsAll(final Collection<?> c, final int size) {
     final List<?> l;
     if (c instanceof List && CollectionUtil.isRandomAccess(l = (List<?>)c)) {
-      int i = 0; do // [RA]
+      int i = 0;
+      do // [RA]
         if (!containsFast(l.get(i)))
           return false;
       while (++i < size);
     }
     else {
-      final Iterator<?> it = c.iterator(); do // [I]
+      final Iterator<?> it = c.iterator();
+      do // [I]
         if (!containsFast(it.next()))
           return false;
       while (it.hasNext());
@@ -387,8 +391,8 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
    * {@code false} other if this tree did not contain the specified element.
    *
    * @param key The key to be deleted.
-   * @return {@code true} if this collection changed as a result of the call, and {@code false} other if this tree did not contain
-   *         the specified element.
+   * @return {@code true} if this collection changed as a result of the call, and {@code false} other if this tree did not contain the
+   *         specified element.
    * @throws NullPointerException If the specified key is null.
    */
   protected abstract boolean delete(T key);
@@ -404,12 +408,14 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
     final int size = size();
     final List<? extends T> l;
     if (c instanceof List && CollectionUtil.isRandomAccess(l = (List<? extends T>)c)) {
-      int i = 0; do // [RA]
+      int i = 0;
+      do // [RA]
         deleteFast(l.get(i));
       while (++i < i$);
     }
     else {
-      final Iterator<? extends T> it = (Iterator<? extends T>)c.iterator(); do // [I]
+      final Iterator<? extends T> it = (Iterator<? extends T>)c.iterator();
+      do // [I]
         deleteFast(it.next());
       while (it.hasNext());
     }
@@ -428,7 +434,8 @@ public abstract class BinarySearchTree<T extends Comparable<? super T>> extends 
       return true;
     }
 
-    final Iterator<T> i = iterator(); do //[I]
+    final Iterator<T> i = iterator();
+    do // [I]
       if (!c.contains(i.next()))
         i.remove();
     while (i.hasNext());
