@@ -97,7 +97,7 @@ public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T ext
     for (int r = 0; r < repeat; ++r) { // [N]
       final ArrayList<T> orderedKeys = createOrderedSequenceOfKeys();
       final ArrayList<T> shuffledKeys = shuffle(orderedKeys);
-      test(onError -> addKeys(createTree(), shuffledKeys, orderedKeys, onError));
+      test((final Supplier<String> onError) -> addKeys(createTree(), shuffledKeys, orderedKeys, onError));
     }
   }
 
@@ -107,7 +107,7 @@ public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T ext
       final ArrayList<T> orderedKeys = createOrderedSequenceOfKeys();
       final ArrayList<T> shuffledKeys = shuffle(orderedKeys);
       final T randomKey = pickRandomKey(shuffledKeys);
-      test(onError -> {
+      test((final Supplier<String> onError) -> {
         final BST tree = createTree();
         addKeys(tree, shuffledKeys, orderedKeys, onError);
         assertFalse(tree.add(randomKey), onError);
@@ -121,7 +121,7 @@ public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T ext
     for (int r = 0; r < repeat; ++r) { // [N]
       final ArrayList<T> orderedKeys = createOrderedSequenceOfKeys();
       final ArrayList<T> shuffledKeys = shuffle(orderedKeys);
-      test(onError -> {
+      test((final Supplier<String> onError) -> {
         final BST tree = createTree();
         addKeys(tree, shuffledKeys, orderedKeys, onError);
 
@@ -152,7 +152,7 @@ public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T ext
       final ArrayList<T> orderedKeys = createOrderedSequenceOfKeys();
       final ArrayList<T> shuffledKeys = shuffle(orderedKeys);
       final int size = orderedKeys.size();
-      test(onError -> {
+      test((final Supplier<String> onError) -> {
         final BST tree = createTree();
         addKeys(tree, shuffledKeys, orderedKeys, onError);
 
@@ -176,7 +176,7 @@ public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T ext
     for (int r = 0; r < repeat; ++r) { // [N]
       final ArrayList<T> orderedKeys = createOrderedSequenceOfKeys();
       final ArrayList<T> shuffledKeys = shuffle(orderedKeys);
-      test(onError -> {
+      test((final Supplier<String> onError) -> {
         final BST tree = createTree();
         addKeys(tree, shuffledKeys, orderedKeys, onError);
 
@@ -212,7 +212,7 @@ public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T ext
     for (int r = 0; r < repeat; ++r) { // [N]
       final ArrayList<T> orderedKeys = createOrderedSequenceOfKeys();
       final ArrayList<T> shuffledKeys = shuffle(orderedKeys);
-      test(onError -> {
+      test((final Supplier<String> onError) -> {
         final BST tree = createTree();
         addKeys(tree, shuffledKeys, orderedKeys, onError);
 
@@ -241,7 +241,7 @@ public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T ext
     for (int r = 0; r < repeat; ++r) { // [N]
       final ArrayList<T> orderedKeys = createOrderedSequenceOfKeys();
       final ArrayList<T> shuffledKeys = shuffle(orderedKeys);
-      test(onError -> {
+      test((final Supplier<String> onError) -> {
         final BST tree = createTree();
         addKeys(tree, shuffledKeys, orderedKeys, onError);
         final T highestKey = tree.getRoot().getMaxNode().getKey();
@@ -257,13 +257,13 @@ public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T ext
     for (int r = 0; r < repeat; ++r) { // [N]
       final ArrayList<T> orderedKeys = createOrderedSequenceOfKeys();
       final ArrayList<T> shuffledKeys = shuffle(orderedKeys);
-      test(onError1 -> {
+      test((final Supplier<String> onError1) -> {
         final BST tree = createTree();
         addKeys(tree, shuffledKeys, orderedKeys, onError1);
         final ArrayList<T> keys = CollectionUtil.asCollection(new ArrayList<>(), tree.toArray((T[])Array.newInstance(type(), tree.size())));
         final ArrayList<T> keysToDelete = shuffle(keys);
 
-        test(onError2 -> {
+        test((final Supplier<String> onError2) -> {
           final BST tree1 = (BST)tree.clone();
           final BST tree2 = (BST)tree.clone();
           final ArrayList<T> keysRemaining = new ArrayList<>(keys);
@@ -303,11 +303,11 @@ public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T ext
     for (int r = 0; r < repeat; ++r) { // [N]
       final ArrayList<T> orderedKeys = createOrderedSequenceOfKeys();
       final ArrayList<T> shuffledKeys = shuffle(orderedKeys);
-      test(onError1 -> {
+      test((final Supplier<String> onError1) -> {
         final BST tree = createTree();
         addKeys(tree, shuffledKeys, orderedKeys, onError1);
 
-        test(onError2 -> {
+        test((final Supplier<String> onError2) -> {
           final BST clone = (BST)tree.clone();
           int size = clone.size();
           final ArrayList<T> keys = CollectionUtil.asCollection(new ArrayList<>(), clone.toArray((T[])Array.newInstance(type(), size)));
@@ -339,7 +339,7 @@ public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T ext
     for (int r = 0; r < repeat; ++r) { // [N]
       final ArrayList<T> orderedKeys = createOrderedSequenceOfKeys();
       final ArrayList<T> shuffledKeys = shuffle(orderedKeys);
-      test(onError -> {
+      test((final Supplier<String> onError) -> {
         final BST tree = createTree();
         addKeys(tree, shuffledKeys, orderedKeys, onError);
 
@@ -361,9 +361,9 @@ public abstract class BinarySearchTreeTest<BST extends BinarySearchTree<T>,T ext
       final ArrayList<T> orderedKeys = createOrderedSequenceOfKeys();
       final ArrayList<T> shuffledKeys = shuffle(orderedKeys);
       final BST tree = createTree();
-      test(onError1 -> {
+      test((final Supplier<String> onError1) -> {
         addKeys(tree, shuffledKeys, orderedKeys, onError1);
-        test(onError2 -> {
+        test((final Supplier<String> onError2) -> {
           final BST clone = (BST)tree.clone();
           assertNotSame(tree, clone, onError2);
           assertEquals(tree, clone, onError2);

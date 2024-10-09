@@ -106,7 +106,7 @@ public class ConcurrentIntervalTreeSetTest {
     for (int i = 0, prevModCount; i < numTests; ++i, prev.set(-1)) { // [N]
       prevModCount = modCount.get();
       final long time = System.currentTimeMillis();
-      set.forEach(key -> {
+      set.forEach((final Interval<Integer> key) -> {
         final Integer next = key.getMin();
         if (next < prev.get())
           fail("next (" + next + ")" + " < " + "prev (" + prev + ")");
@@ -132,7 +132,7 @@ public class ConcurrentIntervalTreeSetTest {
     for (int i = 0, prevModCount; i < numTests; ++i, prev.set(-1), prevPrev.set(-1)) { // [N]
       prevModCount = modCount.get();
       final long time = System.currentTimeMillis();
-      set.removeIf(key -> {
+      set.removeIf((final Interval<Integer> key) -> {
         final Integer next = key.getMin();
         if (prev.get() < prevPrev.get())
           fail("next (" + prev.get() + ")" + " < " + "prev (" + prevPrev.get() + ")");

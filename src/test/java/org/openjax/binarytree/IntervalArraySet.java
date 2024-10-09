@@ -230,7 +230,7 @@ public class IntervalArraySet<T> implements IntervalSet<T>, Cloneable {
     final T key = (T)o;
     final int size = size();
     int index;
-    if (size == 0 || size == (index = CollectionUtil.binaryClosestSearch(data, 0, size, key, i -> i.getMin(), data.get(0))))
+    if (size == 0 || size == (index = CollectionUtil.binaryClosestSearch(data, 0, size, key, (final Interval<T> i) -> i.getMin(), data.get(0))))
       return false;
 
     Interval<T> i = data.get(index);
