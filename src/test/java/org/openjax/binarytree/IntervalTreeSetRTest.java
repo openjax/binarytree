@@ -148,12 +148,12 @@ public class IntervalTreeSetRTest extends BinarySearchTreeTest<IntervalTreeSet<I
     return intervals;
   }
 
-  private static void log(final String methodName, final int range, final long[] times) {
-    final long time0 = times[0] / 1000000;
-    final long time1 = times[1] / 1000000;
+  private static void log(final String methodName, final int range, final long[] timeNss) {
+    final long timeNs0 = timeNss[0] / 1000000;
+    final long timeNs1 = timeNss[1] / 1000000;
     final Color c;
     final String s;
-    if (time0 <= time1) {
+    if (timeNs0 <= timeNs1) {
       c = Color.RED;
       s = "-";
     }
@@ -162,8 +162,8 @@ public class IntervalTreeSetRTest extends BinarySearchTreeTest<IntervalTreeSet<I
       s = "+";
     }
 
-    System.err.println(String.format("%s(%6d) IntervalList: %4dms", methodName, range, time0));
-    System.err.println(String.format("%s(%6d) IntervalTree: %4dms", methodName, range, time1) + " " + Ansi.apply(s, Intensity.BOLD, c));
+    System.err.println(String.format("%s(%6d) IntervalList: %4dms", methodName, range, timeNs0));
+    System.err.println(String.format("%s(%6d) IntervalTree: %4dms", methodName, range, timeNs1) + " " + Ansi.apply(s, Intensity.BOLD, c));
   }
 
   @Test
@@ -453,42 +453,42 @@ public class IntervalTreeSetRTest extends BinarySearchTreeTest<IntervalTreeSet<I
   public void testRandom() {
     final int warmup = 10;
     for (int c = 16, m = 4, f = 32; c <= 2048; c += f += 1, m = c * 2) { // [N]
-      final long[] times = {0, 0};
+      final long[] timeNss = {0, 0};
       for (int r = repeat, w = warmup; r > 0; --r, --w) { // [N]
-        test(createRandomIntervalList(c, m), times);
+        test(createRandomIntervalList(c, m), timeNss);
         if (w > 0)
-          times[0] = times[1] = 0;
+          timeNss[0] = timeNss[1] = 0;
       }
 
-      log("testRandom", m, times);
+      log("testRandom", m, timeNss);
     }
   }
 
   @Test
   public void testDeterministic() {
     final int range = 10;
-    final long[] times = {0, 0};
+    final long[] timeNss = {0, 0};
     for (int m1 = 1; m1 < 5; m1 += 2) // [N]
       for (int m2 = 1; m2 < range; m2 += 2) // [N]
-        permute(range, m1, m2, times);
+        permute(range, m1, m2, timeNss);
 
-    log("testDeterministic", range, times);
+    log("testDeterministic", range, timeNss);
   }
 
   @SuppressWarnings("unchecked")
-  private void permute(final int maxIntervals, final int m1, final int m2, final long[] times) {
+  private void permute(final int maxIntervals, final int m1, final int m2, final long[] timeNss) {
     final Interval<Integer>[] intervals = new Interval[maxIntervals];
     for (int i = 0, j = 0; i < maxIntervals; j = i * 2 + i % m2) { // [N]
       intervals[i] = new Interval<>(j, j * (i % m1 + 1) + i % m2 + 1);
-      for (final PermutationIterator<Interval<Integer>> iterator = new PermutationIterator<>(intervals, 0, ++i); iterator.hasNext(); test(iterator.next(), times)); // [X]
+      for (final PermutationIterator<Interval<Integer>> iterator = new PermutationIterator<>(intervals, 0, ++i); iterator.hasNext(); test(iterator.next(), timeNss)); // [X]
     }
   }
 
-  private void test(final ArrayList<Interval<Integer>> keys, final long[] times) {
+  private void test(final ArrayList<Interval<Integer>> keys, final long[] timeNss) {
     test((final Supplier<String> onError) -> {
       final boolean[] added = new boolean[keys.size()];
-      final IntervalArraySet<Integer> array = test(keys, new IntervalArraySet<Integer>(), added, true, times, 0, onError);
-      final IntervalTreeSet<Integer> tree = test(keys, createTree(), added, false, times, 1, onError);
+      final IntervalArraySet<Integer> array = test(keys, new IntervalArraySet<Integer>(), added, true, timeNss, 0, onError);
+      final IntervalTreeSet<Integer> tree = test(keys, createTree(), added, false, timeNss, 1, onError);
 
       assertEquals(array.size(), tree.size(), onError);
       assertEquals(array.toString(), tree.toString(), onError(onError, () -> keys.toString()));
@@ -496,15 +496,15 @@ public class IntervalTreeSetRTest extends BinarySearchTreeTest<IntervalTreeSet<I
     });
   }
 
-  private static <T extends IntervalSet<Integer>> T test(final ArrayList<Interval<Integer>> intervals, final T impl, final boolean[] added, final boolean setOrAssert, final long[] times, final int index, final Supplier<String> onError) {
-    long time = 0;
+  private static <T extends IntervalSet<Integer>> T test(final ArrayList<Interval<Integer>> intervals, final T impl, final boolean[] added, final boolean setOrAssert, final long[] timeNss, final int index, final Supplier<String> onError) {
+    long timeNs = 0;
     long ts;
     for (int i = 0, i$ = intervals.size(); i < i$; ++i) { // [RA]
       final Interval<Integer> interval = intervals.get(i);
 
       ts = System.nanoTime();
       boolean add = impl.add(interval);
-      time += System.nanoTime() - ts;
+      timeNs += System.nanoTime() - ts;
 
       if (setOrAssert)
         added[i] = add;
@@ -513,12 +513,12 @@ public class IntervalTreeSetRTest extends BinarySearchTreeTest<IntervalTreeSet<I
 
       ts = System.nanoTime();
       add = impl.add(interval);
-      time += System.nanoTime() - ts;
+      timeNs += System.nanoTime() - ts;
 
       assertFalse(add, onError);
     }
 
-    times[index] += time;
+    timeNss[index] += timeNs;
     return impl;
   }
 }

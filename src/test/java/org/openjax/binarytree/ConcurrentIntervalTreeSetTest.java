@@ -83,16 +83,16 @@ public class ConcurrentIntervalTreeSetTest {
   }
 
   private static void testIterator(final IntervalSet<Integer> set, final AtomicInteger modCount, final AtomicBoolean finished, final int numTests) {
-    long time;
+    long timeMs;
     for (int i = 0, prev = -1, prevModCount; i < numTests; ++i, prev = -1) { // [N]
       prevModCount = modCount.get();
-      time = System.currentTimeMillis();
+      timeMs = System.currentTimeMillis();
       for (final Interval<Integer> key : set) { // [S]
         final Integer next = key.getMin();
         if (next < prev)
           fail("next (" + next + ")" + " < " + "prev (" + prev + ")");
 
-        sleep(5 + time - System.currentTimeMillis());
+        sleep(5 + timeMs - System.currentTimeMillis());
         prev = next;
       }
 
@@ -105,13 +105,13 @@ public class ConcurrentIntervalTreeSetTest {
     final AtomicInteger prev = new AtomicInteger(-1);
     for (int i = 0, prevModCount; i < numTests; ++i, prev.set(-1)) { // [N]
       prevModCount = modCount.get();
-      final long time = System.currentTimeMillis();
+      final long timeMs = System.currentTimeMillis();
       set.forEach((final Interval<Integer> key) -> {
         final Integer next = key.getMin();
         if (next < prev.get())
           fail("next (" + next + ")" + " < " + "prev (" + prev + ")");
 
-        sleep(10 + time - System.currentTimeMillis());
+        sleep(10 + timeMs - System.currentTimeMillis());
         prev.set(next);
       });
 
@@ -131,13 +131,13 @@ public class ConcurrentIntervalTreeSetTest {
     final AtomicInteger prevPrev = new AtomicInteger(-1);
     for (int i = 0, prevModCount; i < numTests; ++i, prev.set(-1), prevPrev.set(-1)) { // [N]
       prevModCount = modCount.get();
-      final long time = System.currentTimeMillis();
+      final long timeMs = System.currentTimeMillis();
       set.removeIf((final Interval<Integer> key) -> {
         final Integer next = key.getMin();
         if (prev.get() < prevPrev.get())
           fail("next (" + prev.get() + ")" + " < " + "prev (" + prevPrev.get() + ")");
 
-        sleep(20 + time - System.currentTimeMillis());
+        sleep(20 + timeMs - System.currentTimeMillis());
         prevPrev.set(prev.get());
         prev.set(next);
         return next % 2 == 0 && set.size() > 5;
